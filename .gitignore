@@ -1,0 +1,11 @@
+.vs
+bin
+bin-int
+vendor/glad
+vendor/Premake
+
+*.vcxproj*
+*.sln
+
+Photoxel/assets/*.ttf
+Photoxel/assets/*.jpg
