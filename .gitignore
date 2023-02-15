@@ -3,6 +3,7 @@ bin
 bin-int
 vendor/glad
 vendor/Premake
+vendor/stb
 
 *.vcxproj*
 *.sln

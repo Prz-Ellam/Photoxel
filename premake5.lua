@@ -36,7 +36,9 @@ project "Photoxel"
         "vendor/glm",
         "vendor/imgui",
         "vendor/ImGuizmo",
-        "vendor/implot"
+        "vendor/implot",
+        "vendor/stb",
+        "vendor/IconFontCppHeaders"
     }
 
     links {
