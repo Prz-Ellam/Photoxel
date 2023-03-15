@@ -9,6 +9,7 @@ namespace Photoxel
 	{
 	public:
 		Image(const std::string& path);
+		Image(uint32_t width, uint32_t height, const void* data);
 		~Image();
 
 		void Bind();
@@ -17,6 +18,8 @@ namespace Photoxel
 		const void* GetData() const;
 		const uint32_t GetWidth() const;
 		const uint32_t GetHeight() const;
+
+		void SetData(uint32_t width, uint32_t height, const void* data);
 
 		void* GetTextureID() const;
 	private:

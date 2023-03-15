@@ -4,7 +4,9 @@
 #include <memory>
 #include <ImSequencer.h>
 #include <vector>
+#include <string>
 #include <glm/glm.hpp>
+#include "escapi.h"
 
 namespace Photoxel
 {
@@ -133,13 +135,17 @@ namespace Photoxel
 		ImVec2 m_ViewportSize = ImVec2(0, 0);
 		std::shared_ptr<Photoxel::ImGuiWindow> m_GuiWindow;
 
-		std::shared_ptr<Photoxel::Image> m_Image;
+		std::shared_ptr<Photoxel::Image> m_Image, m_Camera;
 		MySequence mySequence;
 
 		glm::mat4 m_Projection, m_View = glm::mat4(1.0f), m_Model = glm::mat4(1.0f);
 		int pixel;
 		ImVec2 mousePosition;
 		bool start = false;
+		int m_WebcamDevices = 0;
+		std::vector<const char*> m_WebcamDevicesNames = {};
+		SimpleCapParams m_Capture = {};
+		bool m_IsRecording = false;
 
 		void RenderMenuBar();
 		void RenderImageTab();

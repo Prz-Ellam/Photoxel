@@ -26,6 +26,7 @@ namespace Photoxel
 	Application::Application()
 		: m_Running(true)
 	{
+		std::cout << std::filesystem::current_path() << std::endl;
 		m_Window = std::make_shared<Window>();
 		m_Window->SetWindowCloseCallback([&]() {
 			m_Running = false;
@@ -37,11 +38,29 @@ namespace Photoxel
 		m_GuiWindow = std::make_shared<ImGuiWindow>("Viewport", false);
 
 		m_Image = std::make_shared<Photoxel::Image>("image.jpg");
+		const int data = -16777216;
+		m_Camera = std::make_shared<Photoxel::Image>(1, 1, &data);
 		m_Projection = glm::ortho(m_Window->GetWidth() / -2.0f,
 			m_Window->GetWidth() / 2.0f,
 			m_Window->GetHeight() / -2.0f,
 			m_Window->GetHeight() / 2.0f,
 			0.0f, 1000.0f);
+
+		m_WebcamDevices = setupESCAPI();
+		if (m_WebcamDevices == 0) {
+			printf("ESCAPI initialization failure or no devices found.\n");
+			return;
+		}
+
+		for (int i = 0; i < m_WebcamDevices; i++) {
+			char cameraname[255];
+			getCaptureDeviceName(i, cameraname, 255);
+			m_WebcamDevicesNames.push_back(cameraname);
+		}
+
+		m_Capture.mWidth = 1024;
+		m_Capture.mHeight = 1024;
+		m_Capture.mTargetBuf = new int[1024 * 1024];
 	}
 
 	void Application::Run()
@@ -364,13 +383,37 @@ namespace Photoxel
 
 		ImGui::Begin("Cameras");
 		static int item = 0;
-		char elements[230] = "Camera1\0Camera2\0Camera3\0";
-		ImGui::Combo("##", &item, elements);
+		ImGui::Combo("##", &item, m_WebcamDevicesNames.data(), m_WebcamDevicesNames.size());
 		ImGui::SameLine();
-		ImGui::Button(ICON_FA_PLAY, ImVec2(20, 0));
+		if (ImGui::Button(ICON_FA_PLAY, ImVec2(20, 0))) {
+			initCapture(item, &m_Capture);
+			doCapture(item);
+			m_IsRecording = true;
+		}
 		ImGui::SameLine();
-		ImGui::Button(ICON_FA_STOP, ImVec2(20, 0));
+		if (ImGui::Button(ICON_FA_STOP, ImVec2(20, 0))) {
+			deinitCapture(item);
+			const int data = -16777216;
+			m_Camera->SetData(1, 1, &data);
+			m_IsRecording = false;
+		}
 		ImGui::End();
+
+		if (m_IsRecording && isCaptureDone(item)) {
+
+			for (int i = 0; i < m_Capture.mWidth * m_Capture.mHeight; i++) {
+				m_Capture.mTargetBuf[i] = (m_Capture.mTargetBuf[i] & 0xff00ff00) |
+					((m_Capture.mTargetBuf[i] & 0xff) << 16) |
+					((m_Capture.mTargetBuf[i] & 0xff0000) >> 16);
+
+				m_Capture.mTargetBuf[i] |= 0xff000000;
+			}
+
+			m_Camera->SetData(1024, 1024, m_Capture.mTargetBuf);
+			doCapture(item);
+		}
+
+
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Camera Viewport");
@@ -379,9 +422,8 @@ namespace Photoxel
 
 		ImGui::SetCursorPosX((videoViewportSize.x / 2) - (m_Image->GetWidth() * ratio / 2));
 
-
-		ImGui::Image((ImTextureID)m_Image->GetTextureID(),
-			ImVec2(m_Image->GetWidth() * ratio, videoViewportSize.y), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image((ImTextureID)m_Camera->GetTextureID(),
+			ImVec2(m_Image->GetWidth() * ratio, videoViewportSize.y));
 		ImGui::End();
 		ImGui::PopStyleVar();
 

@@ -23,7 +23,8 @@ project "Photoxel"
         "%{prj.name}/src/**.h", 
         "%{prj.name}/src/**.cpp",
         "vendor/imgui/backends/imgui_impl_glfw.cpp",
-        "vendor/imgui/backends/imgui_impl_opengl3.cpp"
+        "vendor/imgui/backends/imgui_impl_opengl3.cpp",
+        "vendor/escapi/escapi.cpp"
     }
 
     defines {
@@ -38,7 +39,8 @@ project "Photoxel"
         "vendor/ImGuizmo",
         "vendor/implot",
         "vendor/stb",
-        "vendor/IconFontCppHeaders"
+        "vendor/IconFontCppHeaders",
+        "vendor/escapi"
     }
 
     links {
