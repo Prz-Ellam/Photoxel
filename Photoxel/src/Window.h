@@ -24,6 +24,7 @@ namespace Photoxel
 		glm::vec2 GetFramebufferSize() const;
 		uint32_t GetWidth() const;
 		uint32_t GetHeight() const;
+		void SetIcons(const std::string& filePath);
 
 		void SetWindowCloseCallback(WindowCloseEventFn callback);
 	private:

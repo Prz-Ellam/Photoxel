@@ -32,6 +32,7 @@ namespace Photoxel
 		m_Window->SetWindowCloseCallback([&]() {
 			m_Running = false;
 		});
+		m_Window->SetIcons("logo.png");
 		m_Renderer = std::make_shared<Renderer>();
 		m_ViewportFramebuffer = std::make_shared<Framebuffer>(1280, 720);
 
@@ -79,7 +80,7 @@ namespace Photoxel
 
 			m_Renderer->BeginScene(m_Projection, m_View, m_Model, m_Dets);
 			m_ViewportFramebuffer->ClearAttachment();
-			m_Camera->Bind();
+			m_Image->Bind();
 
 			m_Renderer->OnRender();
 			pixel = m_ViewportFramebuffer->ReadPixel(mousePosition.x, mousePosition.y);
@@ -149,13 +150,15 @@ namespace Photoxel
 				
 				ImGui::Separator();
 
-				if (ImGui::MenuItem(ICON_FA_DOOR_OPEN"\tExit"))
+				if (ImGui::MenuItem(ICON_FA_DOOR_OPEN"\tExit", "Alt+F4"))
 					Close();
 
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Help")) {
-				ImGui::MenuItem(ICON_FA_BOOK"\tUser Manual");
+				if (ImGui::MenuItem(ICON_FA_BOOK"\tUser Manual")) {
+					ShellExecuteA(GetDesktopWindow(), "open", "request.pdf", NULL, NULL, SW_SHOWNORMAL);
+				}
 				ImGui::EndMenu();
 			}
 

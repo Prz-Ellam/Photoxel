@@ -1,4 +1,5 @@
 #include "Window.h"
+#include <stb_image.h>
 
 namespace Photoxel
 {
@@ -79,6 +80,18 @@ namespace Photoxel
 	{
 		return m_Width;
 	}
+
+	void Window::SetIcons(const std::string& filePath) {
+
+		GLFWimage icons[2];
+		icons[0].pixels = stbi_load(filePath.c_str(), &icons[0].width, &icons[0].height, nullptr, 4);
+		icons[1].pixels = icons[0].pixels;
+		icons[1].width = icons[0].width;
+		icons[1].height = icons[0].height;
+
+		glfwSetWindowIcon(m_Window, 2, icons);
+	}
+
 
 	void Window::SetWindowCloseCallback(WindowCloseEventFn callback)
 	{
