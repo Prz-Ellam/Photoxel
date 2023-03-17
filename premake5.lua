@@ -40,7 +40,8 @@ project "Photoxel"
         "vendor/implot",
         "vendor/stb",
         "vendor/IconFontCppHeaders",
-        "vendor/escapi"
+        "vendor/escapi",
+        "vendor/dlib"
     }
 
     links {

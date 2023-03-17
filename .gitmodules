@@ -16,3 +16,6 @@
 [submodule "vendor/IconFontCppHeaders"]
 	path = vendor/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders
+[submodule "vendor/dlib"]
+	path = vendor/dlib
+	url = https://github.com/davisking/dlib

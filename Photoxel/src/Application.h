@@ -7,6 +7,8 @@
 #include <string>
 #include <glm/glm.hpp>
 #include "escapi.h"
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_io.h>
 
 namespace Photoxel
 {
@@ -146,6 +148,9 @@ namespace Photoxel
 		std::vector<const char*> m_WebcamDevicesNames = {};
 		SimpleCapParams m_Capture = {};
 		bool m_IsRecording = false;
+		dlib::frontal_face_detector m_Detector;
+		std::vector<uint8_t> m_DetectionData;
+		std::vector<dlib::rectangle> m_Dets;
 
 		void RenderMenuBar();
 		void RenderImageTab();

@@ -20,6 +20,7 @@
 #include <string.h>
 #include <implot.h>
 #include "IconsFontAwesome5.h"
+#include <glad/glad.h>
 
 namespace Photoxel
 {
@@ -58,9 +59,11 @@ namespace Photoxel
 			m_WebcamDevicesNames.push_back(cameraname);
 		}
 
-		m_Capture.mWidth = 1024;
-		m_Capture.mHeight = 1024;
-		m_Capture.mTargetBuf = new int[1024 * 1024];
+		m_Capture.mWidth = 512;
+		m_Capture.mHeight = 512;
+		m_Capture.mTargetBuf = new int[512 * 512];
+		m_Detector = dlib::get_frontal_face_detector();
+		m_DetectionData.resize(512 * 512);
 	}
 
 	void Application::Run()
@@ -74,9 +77,10 @@ namespace Photoxel
 			m_ViewportFramebuffer->Resize(m_ViewportSize.x, m_ViewportSize.y);
 			m_ViewportFramebuffer->Begin();
 
-			m_Renderer->BeginScene(m_Projection, m_View, m_Model);
+			m_Renderer->BeginScene(m_Projection, m_View, m_Model, m_Dets);
 			m_ViewportFramebuffer->ClearAttachment();
-			m_Image->Bind();
+			m_Camera->Bind();
+
 			m_Renderer->OnRender();
 			pixel = m_ViewportFramebuffer->ReadPixel(mousePosition.x, mousePosition.y);
 
@@ -400,16 +404,24 @@ namespace Photoxel
 		ImGui::End();
 
 		if (m_IsRecording && isCaptureDone(item)) {
-
+			
 			for (int i = 0; i < m_Capture.mWidth * m_Capture.mHeight; i++) {
 				m_Capture.mTargetBuf[i] = (m_Capture.mTargetBuf[i] & 0xff00ff00) |
 					((m_Capture.mTargetBuf[i] & 0xff) << 16) |
 					((m_Capture.mTargetBuf[i] & 0xff0000) >> 16);
 
 				m_Capture.mTargetBuf[i] |= 0xff000000;
+				m_DetectionData[i] = (m_Capture.mTargetBuf[i] & 0xff00ff00) +
+					((m_Capture.mTargetBuf[i] & 0xff) << 16) +
+					((m_Capture.mTargetBuf[i] & 0xff0000) >> 16) / 3;
 			}
 
-			m_Camera->SetData(1024, 1024, m_Capture.mTargetBuf);
+			dlib::array2d<unsigned char> img(512, 512);
+			memcpy(&img[0][0], m_DetectionData.data(), 512 * 512 * sizeof(uint8_t));
+
+			m_Dets = m_Detector(img, 0);
+
+			m_Camera->SetData(512, 512, m_Capture.mTargetBuf);
 			doCapture(item);
 		}
 
@@ -418,17 +430,19 @@ namespace Photoxel
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Camera Viewport");
 		ImVec2 videoViewportSize = ImGui::GetContentRegionAvail();
-		float ratio = videoViewportSize.y / (float)m_Image->GetHeight();
+		//float ratio = videoViewportSize.y / (float)m_Image->GetHeight();
 
-		ImGui::SetCursorPosX((videoViewportSize.x / 2) - (m_Image->GetWidth() * ratio / 2));
+		//ImGui::SetCursorPosX((videoViewportSize.x / 2) - (m_Image->GetWidth() * ratio / 2));
+		//ImGui::Image((ImTextureID)m_Camera->GetTextureID(),
+		//	ImVec2(m_Image->GetWidth() * ratio, videoViewportSize.y));
+		ImGui::Image((void*)m_ViewportFramebuffer->GetColorAttachment(), videoViewportSize);
 
-		ImGui::Image((ImTextureID)m_Camera->GetTextureID(),
-			ImVec2(m_Image->GetWidth() * ratio, videoViewportSize.y));
 		ImGui::End();
 		ImGui::PopStyleVar();
 
 		ImGui::Begin("Camera Stats");
-		ImGui::Text(ICON_FA_SMILE " Numero de personas: 3");
+		std::string persons = ICON_FA_SMILE + std::string(" Numero de personas: ") + std::to_string(m_Dets.size());
+		ImGui::Text(persons.c_str());
 		ImGui::End();
 
 
