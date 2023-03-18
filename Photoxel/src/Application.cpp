@@ -53,7 +53,7 @@ namespace Photoxel
 			printf("ESCAPI initialization failure or no devices found.\n");
 			return;
 		}
-
+		m_WebcamDevicesNames.push_back("Integrated webcam");
 		for (int i = 0; i < m_WebcamDevices; i++) {
 			char cameraname[255];
 			getCaptureDeviceName(i, cameraname, 255);
@@ -80,7 +80,7 @@ namespace Photoxel
 
 			m_Renderer->BeginScene(m_Projection, m_View, m_Model, m_Dets);
 			m_ViewportFramebuffer->ClearAttachment();
-			m_Image->Bind();
+			m_Camera->Bind();
 
 			m_Renderer->OnRender();
 			pixel = m_ViewportFramebuffer->ReadPixel(mousePosition.x, mousePosition.y);
@@ -157,7 +157,7 @@ namespace Photoxel
 			}
 			if (ImGui::BeginMenu("Help")) {
 				if (ImGui::MenuItem(ICON_FA_BOOK"\tUser Manual")) {
-					ShellExecuteA(GetDesktopWindow(), "open", "request.pdf", NULL, NULL, SW_SHOWNORMAL);
+					ShellExecuteA(GetDesktopWindow(), "open", "Photoxel.pdf", NULL, NULL, SW_SHOWNORMAL);
 				}
 				ImGui::EndMenu();
 			}
