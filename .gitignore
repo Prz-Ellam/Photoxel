@@ -4,6 +4,9 @@ bin-int
 vendor/glad
 vendor/Premake
 vendor/stb
+vendor/ffmpeg
+vendor/escapi
+vendor/dlib
 
 *.vcxproj*
 *.sln
@@ -12,3 +15,5 @@ Photoxel/assets/*.ttf
 Photoxel/assets/*.jpg
 Photoxel/src/IconsFontAwesome5.h
 Photoxel/src/stb_image.h
+
+Photoxel/assets/*.mp4

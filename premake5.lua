@@ -41,7 +41,13 @@ project "Photoxel"
         "vendor/stb",
         "vendor/IconFontCppHeaders",
         "vendor/escapi",
-        "vendor/dlib"
+        "vendor/dlib",
+        "vendor/ffmpeg/include"
+    }
+
+    libdirs {
+        "vendor/ffmpeg/lib",
+        "Photoxel/assets"
     }
 
     links {
@@ -50,7 +56,16 @@ project "Photoxel"
 		"ImGui",
 		"ImGuizmo",
         "ImPlot",
-		"opengl32.lib"
+		"opengl32.lib",
+        "swscale.lib",
+        "swresample.lib",
+        "postproc.lib",
+        "avutil.lib",
+        "avformat.lib",
+        "avfilter.lib",
+        "avdevice.lib",
+        "avcodec.lib",
+        "dlib19.24.0_release_64bit_msvc1932.lib"
 	}
 
     filter "configurations:Debug"

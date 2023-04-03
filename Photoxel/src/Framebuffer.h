@@ -1,6 +1,7 @@
 #pragma once
 
 #include <inttypes.h>
+#include <vector>
 
 namespace Photoxel
 {
@@ -18,6 +19,9 @@ namespace Photoxel
 		virtual uint32_t GetColorAttachment() const;
 		void ClearAttachment(int value = -1) const;
 		int ReadPixel(int x, int y) const;
+
+		std::vector<uint8_t> GetData() const;
+
 		uint32_t GetEntityAttachment() const;
 
 		uint32_t GetWidth() const;

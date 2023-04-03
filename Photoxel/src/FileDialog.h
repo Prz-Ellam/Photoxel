@@ -2,6 +2,7 @@
 
 #include <string>
 #include "Window.h"
+#include "Application.h"
 
 namespace Photoxel
 {

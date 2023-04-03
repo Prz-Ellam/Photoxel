@@ -5,6 +5,36 @@
 
 namespace Photoxel
 {
+	std::string GetImageName(const std::string& filePath)
+	{
+		// Split the file path string based on the directory separator character
+		std::vector<std::string> pathComponents;
+		size_t startPos = 0;
+		size_t endPos = 0;
+		while ((endPos = filePath.find_first_of("/\\", startPos)) != std::string::npos)
+		{
+			if (endPos > startPos)
+			{
+				pathComponents.push_back(filePath.substr(startPos, endPos - startPos));
+			}
+			startPos = endPos + 1;
+		}
+		if (startPos < filePath.length())
+		{
+			pathComponents.push_back(filePath.substr(startPos));
+		}
+
+		// Return the last component of the path (i.e. the image name)
+		if (!pathComponents.empty())
+		{
+			return pathComponents.back();
+		}
+		else
+		{
+			return "";
+		}
+	}
+
     Image::Image(const std::string& path)
     {
 		glGenTextures(1, &m_TextureID);
@@ -17,13 +47,14 @@ namespace Photoxel
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 		int width, height, channels;
-		stbi_set_flip_vertically_on_load(1);
 		unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 4);
 		m_Data = data;
 		m_Width = width;
 		m_Height = height;
+		m_Filename = GetImageName(path.c_str());
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
     }
 
 	Image::Image(uint32_t width, uint32_t height, const void* data) {
@@ -41,6 +72,7 @@ namespace Photoxel
 		m_Data = data;
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
 	Image::~Image()
@@ -60,9 +92,18 @@ namespace Photoxel
 
 	}
 
+	const char* Image::GetFilename() const
+	{
+		return m_Filename.c_str();
+	}
+
 	const void* Image::GetData() const
 	{
 		return m_Data;
+	}
+
+	const void* Image::GetData2() const {
+		return nullptr;
 	}
 
 	const uint32_t Image::GetWidth() const
@@ -81,6 +122,17 @@ namespace Photoxel
 	}
 
 	void Image::SetData(uint32_t width, uint32_t height, const void* data)
+	{
+		m_Width = width;
+		m_Height = height;
+		Bind();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (m_Width == 1) ? GL_NEAREST : GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (m_Width == 1) ? GL_NEAREST : GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		Unbind();
+	}
+
+	void Image::SetData2(uint32_t width, uint32_t height, const void* data)
 	{
 		m_Width = width;
 		m_Height = height;

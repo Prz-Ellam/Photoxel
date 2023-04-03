@@ -1,5 +1,7 @@
 #include "Framebuffer.h"
 #include <glad/glad.h>
+#include <vector>
+#include <algorithm>
 
 namespace Photoxel
 {
@@ -75,6 +77,25 @@ namespace Photoxel
 		return pixelData;
 	}
 
+	std::vector<uint8_t> Framebuffer::GetData() const {
+		int level = 0;
+		int width = m_Width >> level;
+		int height = m_Height >> level;
+
+		std::vector<uint8_t> buffer(width * height * 4);
+		glPixelStorei(GL_PACK_ALIGNMENT, GL_TRUE);
+		glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
+		std::vector<unsigned char> flippedBuffer(width * height * 4);
+		for (int y = 0; y < height; ++y) {
+			const uint8_t* srcRow = buffer.data() + (height - y - 1) * width * 4;
+			unsigned char* dstRow = flippedBuffer.data() + y * width * 4;
+			memcpy(dstRow, srcRow, width * 4);
+		}
+		return flippedBuffer;
+	}
+
 	uint32_t Framebuffer::GetWidth() const
 	{
 		return m_Width;
@@ -89,25 +110,29 @@ namespace Photoxel
 	{
 		glGenTextures(1, &m_ColorAttachmentID);
 		glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*_MIPMAP_LINEAR*/);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR/*_MIPMAP_LINEAR*/);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
 
 		glGenTextures(1, &m_EntityAttachmentID);
 		glBindTexture(GL_TEXTURE_2D, m_EntityAttachmentID);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_EntityAttachmentID, 0);
 	}

@@ -11,10 +11,9 @@ namespace Photoxel
         int ID;
     };
 
-	Renderer::Renderer() : m_Dets(std::vector<dlib::rectangle>())
-	{
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-		{
+	Renderer::Renderer()
+    {
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 			return;
 		}
 
@@ -27,11 +26,6 @@ namespace Photoxel
             { "PixelShader", Photoxel::ShaderType::Pixel }
         });
 
-        m_LineShader = new Shader({
-            { "LineVertexShader", Photoxel::ShaderType::Vertex },
-            { "LinePixelShader", Photoxel::ShaderType::Pixel }
-        });
-
         struct Data {
             glm::vec4 Position;
             glm::vec2 TexCoords;
@@ -39,10 +33,10 @@ namespace Photoxel
         };
 
         Data data[] = {
-            { {  300.0f,  300.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, 3 },
-            { {  300.0f, -300.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, 3 },
-            { { -300.0f, -300.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, 3 },
-            { { -300.0f,  300.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, 3 }
+            { {  1.0f,  1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, 3 },
+            { {  1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, 3 },
+            { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, 3 },
+            { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, 3 }
         };
         unsigned int indices[] = {  // note that we start from 0!
             0, 1, 3,  // first Triangle
@@ -74,27 +68,6 @@ namespace Photoxel
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         glBindVertexArray(0);
-
-
-        glCreateVertexArrays(1, &m_LineVertexArray);
-        glBindVertexArray(m_LineVertexArray);
-
-        glCreateBuffers(1, &m_LineVertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, m_LineVertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(Line) * 400, nullptr, GL_DYNAMIC_DRAW);
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Line), (void*)offsetof(Line, Position));
-
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Line), (void*)offsetof(Line, Colour));
-
-        glEnableVertexAttribArray(2);
-        glVertexAttribIPointer(2, 1, GL_INT, sizeof(Line), (void*)offsetof(Line, ID));
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        glBindVertexArray(0);
 	}
 
     Renderer::~Renderer()
@@ -105,63 +78,16 @@ namespace Photoxel
     void Renderer::OnRender()
     {
         // draw our first triangle
-        m_Shader->Bind();
-        m_Shader->SetMat4("u_Projection", m_Projection);
-        m_Shader->SetMat4("u_View", m_View);
-        m_Shader->SetMat4("u_Model", m_Model);
+        //m_Shader->Bind();
+
         m_Shader->SetInt("u_Texture", 0);
 
         glBindVertexArray(m_VertexArray); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        m_LineShader->Bind();
-        m_LineShader->SetMat4("u_Projection", m_Projection);
-        m_LineShader->SetMat4("u_View", m_View);
-        glBindVertexArray(m_LineVertexArray);
-
-        std::vector<Line> rects;
-        for (auto& det : m_Dets)
-        {
-            rects.push_back(Line{ { det.right() - 256.0f, det.top() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3});
-            rects.push_back(Line{ { det.right() - 256.0f, det.bottom() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3 });
-            rects.push_back(Line{ { det.right() - 256.0f, det.bottom() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3 });
-            rects.push_back(Line{ { det.left() - 256.0f, det.bottom() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3 });
-            rects.push_back(Line{ { det.left() - 256.0f, det.bottom() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3 });
-            rects.push_back(Line{ { det.left() - 256.0f, det.top() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3 });
-            rects.push_back(Line{ { det.left() - 256.0f, det.top() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3 });
-            rects.push_back(Line{ { det.right() - 256.0f, det.top() - 256.0f, 0.0f, 1.0f}, { 1.0, 0.0f, 0.0f, 1.0f}, 3 });
-        }
-
-        Line data[] = {
-            { {  200.0f,  200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 },
-            { {  200.0f, -200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 },
-
-            { {  200.0f, -200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 },
-            { { -200.0f, -200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 },
-
-            { { -200.0f, -200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 },
-            { { -200.0f,  200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 },
-
-            { { -200.0f,  200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 },
-            { {  200.0f,  200.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, 3 }
-        };
-
-        glBindBuffer(GL_ARRAY_BUFFER, m_LineVertexBuffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, rects.size() * sizeof(Line), rects.data());
-
-
-        glDrawArrays(GL_LINES, 0, rects.size());
     }
 
-    void Renderer::BeginScene(const glm::mat4& projection, const glm::mat4& view, 
-        const glm::mat4& model, std::vector<dlib::rectangle> rectangles)
+    void Renderer::BeginScene()
     {
-        m_Projection = projection;
-        m_View = view;
-        m_Model = model;
-        m_Dets = rectangles;
-
         glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
     }

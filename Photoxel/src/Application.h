@@ -6,14 +6,23 @@
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
-#include "escapi.h"
 #include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing.h>
 #include <dlib/image_io.h>
+#include "Video.h"
+#include "Filters.h"
+#include "Capture.h"
+#include <thread>
+#include <mutex>
 
-namespace Photoxel
-{
+namespace Photoxel {
 	static const char* SequencerItemTypeNames[] = { "Video" };
 
+	enum Section {
+		IMAGE,
+		VIDEO,
+		CAMERA
+	};
 
 	struct MySequence : public ImSequencer::SequenceInterface
 	{
@@ -125,6 +134,7 @@ namespace Photoxel
 	{
 	public:
 		Application();
+		~Application() = default;
 		void Run();
 
 		void Close();
@@ -134,23 +144,30 @@ namespace Photoxel
 		std::shared_ptr<Photoxel::Framebuffer> m_ViewportFramebuffer;
 		std::shared_ptr<Photoxel::ImGuiLayer> m_GuiLayer;
 		bool m_Running;
-		ImVec2 m_ViewportSize = ImVec2(0, 0);
 		std::shared_ptr<Photoxel::ImGuiWindow> m_GuiWindow;
+		Capture m_Capture;
 
-		std::shared_ptr<Photoxel::Image> m_Image, m_Camera;
+		std::shared_ptr<Photoxel::Image> m_Image, m_VideoFrame, m_Camera;
+		std::shared_ptr<Video> m_Video = nullptr;
 		MySequence mySequence;
-
-		glm::mat4 m_Projection, m_View = glm::mat4(1.0f), m_Model = glm::mat4(1.0f);
-		int pixel;
-		ImVec2 mousePosition;
-		bool start = false;
-		int m_WebcamDevices = 0;
-		std::vector<const char*> m_WebcamDevicesNames = {};
-		SimpleCapParams m_Capture = {};
+		
+		int m_WebcamDevicesCount;
+		std::vector<std::string> m_WebcamDevicesNames;
+		std::vector<const char*> m_WebcamDevicesNamesRef;
 		bool m_IsRecording = false;
 		dlib::frontal_face_detector m_Detector;
-		std::vector<uint8_t> m_DetectionData;
 		std::vector<dlib::rectangle> m_Dets;
+
+		Section m_SectionFocus = IMAGE;
+		std::unordered_set<Filter> m_ImageFilters;
+
+		float m_Contrast = 0.0f;
+		float m_Thresehold = 0.0f;
+
+		float m_ImageScale = 1.0f;
+
+		std::vector<float> red, green, blue;
+		bool m_HistogramHasUpdate = true;
 
 		void RenderMenuBar();
 		void RenderImageTab();

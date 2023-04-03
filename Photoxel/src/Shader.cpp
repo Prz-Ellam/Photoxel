@@ -50,7 +50,7 @@ namespace Photoxel
 		glUseProgram(m_RendererID);
 	}
 
-	void Shader::RecreateShader(std::initializer_list<ShaderProperties> properties, std::vector<Filter> filtersApply)
+	void Shader::RecreateShader(std::initializer_list<ShaderProperties> properties, std::unordered_set<Filter> filtersApply)
 	{
 		Kill();
 		m_RendererID = glCreateProgram();
@@ -120,7 +120,7 @@ namespace Photoxel
 		return shader;
 	}
 
-	uint32_t Shader::CreateShader(ShaderProperties properties, std::vector<Filter> filters)
+	uint32_t Shader::CreateShader(ShaderProperties properties, std::unordered_set<Filter> filters)
 	{
 		GLuint shader = glCreateShader(PhotoxelToGLShaderType(properties.Type));
 		std::string codeStr = GetShaderCode(properties.Filepath).c_str();
@@ -143,10 +143,39 @@ namespace Photoxel
 						mainCode += "o_FragColor = negative(o_FragColor);\n";
 						break;
 					}
+					case Filter::Sepia:
+					{
+						mainCode += "o_FragColor = sepia(o_FragColor);\n";
+						break;
+					}
 					case Filter::Brightness:
 					{
 						headerCode += "uniform float u_Brightness;\n";
 						mainCode += "o_FragColor = brightness(o_FragColor, u_Brightness);\n";
+						break;
+					}
+					case Filter::Contrast:
+					{
+						headerCode += "uniform float u_Contrast;\n";
+						mainCode += "o_FragColor = contrast(o_FragColor, u_Contrast);\n";
+						break;
+					}
+					case Filter::Binary:
+					{
+						headerCode += "uniform float u_Thresehold;\n";
+						mainCode += "o_FragColor = binary(o_FragColor, u_Thresehold);\n";
+						break;
+					}
+					case Filter::EdgeDetection:
+					{
+						headerCode += "uniform int u_Width;\n";
+						headerCode += "uniform int u_Height;\n";
+						mainCode += "o_FragColor = edgeDetection(u_Width, u_Height);\n";
+						break;
+					}
+					case Filter::Pixelate:
+					{
+						mainCode += "o_FragColor = mosaic(12);\n";
 						break;
 					}
 				}
