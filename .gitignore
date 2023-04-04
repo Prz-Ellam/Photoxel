@@ -11,8 +11,8 @@ vendor/dlib
 *.vcxproj*
 *.sln
 
-Photoxel/assets
 Photoxel/assets/*.ttf
+Photoxel/assets/*.png
 Photoxel/assets/*.jpg
 Photoxel/assets/*.dll
 Photoxel/assets/*.lib
