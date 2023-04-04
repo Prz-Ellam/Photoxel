@@ -13,6 +13,7 @@ vendor/dlib
 
 Photoxel/assets/*.ttf
 Photoxel/assets/*.jpg
+Photoxel/assets/*.dll
 Photoxel/src/IconsFontAwesome5.h
 Photoxel/src/stb_image.h
 
