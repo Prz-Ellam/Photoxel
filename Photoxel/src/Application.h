@@ -6,14 +6,16 @@
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
+#include "escapi.h"
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing.h>
 #include <dlib/image_io.h>
 #include "Video.h"
 #include "Filters.h"
-#include "Capture.h"
+
 #include <thread>
 #include <mutex>
+#include "Capture.h"
 
 namespace Photoxel {
 	static const char* SequencerItemTypeNames[] = { "Video" };
@@ -145,7 +147,6 @@ namespace Photoxel {
 		std::shared_ptr<Photoxel::ImGuiLayer> m_GuiLayer;
 		bool m_Running;
 		std::shared_ptr<Photoxel::ImGuiWindow> m_GuiWindow;
-		Capture m_Capture;
 
 		std::shared_ptr<Photoxel::Image> m_Image, m_VideoFrame, m_Camera;
 		std::shared_ptr<Video> m_Video = nullptr;
@@ -154,12 +155,16 @@ namespace Photoxel {
 		int m_WebcamDevicesCount;
 		std::vector<std::string> m_WebcamDevicesNames;
 		std::vector<const char*> m_WebcamDevicesNamesRef;
+		SimpleCapParams m_Capture = {};
 		bool m_IsRecording = false;
 		dlib::frontal_face_detector m_Detector;
 		std::vector<dlib::rectangle> m_Dets;
 
 		Section m_SectionFocus = IMAGE;
 		std::unordered_set<Filter> m_ImageFilters;
+		std::unordered_set<Filter> m_VideoFilters;
+
+		Capture m_Capture2;
 
 		float m_Contrast = 0.0f;
 		float m_Thresehold = 0.0f;

@@ -1,17 +1,18 @@
 #include "Capture.h"
 #include "escapi.h"
+#include <mutex>
 
 extern "C" {
 #include <libavutil/opt.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 #include <libavutil/frame.h>
 #include <libavutil/mem.h>
 #include <libavutil/avutil.h>
 #include <libavdevice/avdevice.h>
 }
+#include <iostream>
 
 namespace Photoxel
 {
@@ -33,7 +34,14 @@ namespace Photoxel
 		}
 
         avdevice_register_all();
+        m_Buffer.resize(MAX_FRAME_SIZE);
 	}
+
+    Capture::~Capture()
+    {
+        FreeBuffer();
+        StopCapture();
+    }
 
 	std::vector<const char*> Capture::GetCaptureDeviceNames() const
 	{
@@ -78,6 +86,9 @@ namespace Photoxel
             return false;
         }
 
+        m_Width = m_CodecContext->width;
+        m_Height = m_CodecContext->height;
+
         result = avcodec_open2(m_CodecContext, decoder, nullptr);
         if (result < 0) {
             return false;
@@ -93,11 +104,32 @@ namespace Photoxel
             return false;
         }
 
+        m_SwsContext = sws_getContext(m_CodecContext->width, m_CodecContext->height,
+            m_CodecContext->pix_fmt, m_CodecContext->width, m_CodecContext->height,
+            AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
+
+        if (!m_SwsContext) {
+            return false;
+        }
+
+        m_CaptureStarted = true;
+        m_CaptureThread = std::thread([&]() {
+            while (m_CaptureStarted) {
+                ReadCapture();
+                FreeBuffer();
+            }
+        });
+
         return true;
 	}
 
 	bool Capture::StopCapture()
 	{
+        if (m_CaptureThread.joinable()) {
+            m_CaptureStarted = false;
+            m_CaptureThread.join();
+        }
+
         if (m_FormatContext)
         {
             avformat_close_input(&m_FormatContext);
@@ -122,22 +154,35 @@ namespace Photoxel
             m_Packet = nullptr;
         }
 
+        if (m_SwsContext)
+        {
+            sws_freeContext(m_SwsContext);
+            m_SwsContext = nullptr;
+        }
+
         return true;
 	}
 
-    int Capture::GetWidth() const
+    int Capture::GetWidth()
     {
-        return m_Frame->width;
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        return m_Width;
     }
 
-    int Capture::GetHeight() const
+    int Capture::GetHeight()
     {
-        return m_Frame->height;
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        return m_Height;
     }
 
-    uint8_t* Capture::GetBuffer() const
+    uint8_t* Capture::GetBuffer()
     {
-        return m_Buffer;
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        return m_Buffer.data();
+    }
+
+    void Capture::FreeBuffer()
+    {
     }
 
     bool Capture::ReadCapture()
@@ -164,19 +209,9 @@ namespace Photoxel
             return false;
         }
 
-        m_Buffer = new uint8_t[m_Frame->width * m_Frame->height * 4];
-        SwsContext* swsContext = sws_getContext(m_Frame->width, m_Frame->height,
-            m_CodecContext->pix_fmt, m_Frame->width, m_Frame->height,
-            AV_PIX_FMT_RGB0, SWS_BILINEAR, nullptr, nullptr, nullptr);
-
-        if (!swsContext) {
-            return false;
-        }
-
-        uint8_t* dest[4] = { m_Buffer, nullptr, nullptr, nullptr };
-        int stride[4] = { m_Frame->width * 4, 0, 0, 0 };
-        sws_scale(swsContext, m_Frame->data, m_Frame->linesize, 0, m_Frame->height, dest, stride);
-        sws_freeContext(swsContext);
+        uint8_t* dest[4] = { m_Buffer.data(), nullptr, nullptr, nullptr};
+        int stride[4] = { m_Frame->width * 3, 0, 0, 0 };
+        sws_scale(m_SwsContext, m_Frame->data, m_Frame->linesize, 0, m_Frame->height, dest, stride);
 
         return true;
     }

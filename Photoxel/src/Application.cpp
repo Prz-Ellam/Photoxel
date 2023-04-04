@@ -14,8 +14,8 @@
 #include <stb_image_write.h>
 #include <stb_image_resize.h>
 
-#define WIDTH 1024
-#define HEIGHT 1024
+#define WIDTH 1280
+#define HEIGHT 720
 
 float prueba = 0.0;
 
@@ -40,8 +40,7 @@ namespace Photoxel
 		m_VideoFrame = std::make_shared<Image>(1, 1, &data);
 		m_Camera = std::make_shared<Photoxel::Image>(1, 1, &data);
 
-		//m_WebcamDevicesCount = setupESCAPI();
-		m_WebcamDevicesCount = 2;
+		m_WebcamDevicesCount = setupESCAPI();
 		if (m_WebcamDevicesCount == 0) {
 			printf("ESCAPI initialization failure or no devices found.\n");
 			return;
@@ -49,14 +48,14 @@ namespace Photoxel
 
 		for (int i = 0; i < m_WebcamDevicesCount; i++) {
 			char cameraname[255];
-			//getCaptureDeviceName(i, cameraname, 255);
+			getCaptureDeviceName(i, cameraname, 255);
 			m_WebcamDevicesNames.push_back(cameraname);
 			m_WebcamDevicesNamesRef.push_back(m_WebcamDevicesNames[i].c_str());
 		}
 
-		//m_Capture.mWidth = WIDTH;
-		//m_Capture.mHeight = HEIGHT;
-		//m_Capture.mTargetBuf = new int[WIDTH * HEIGHT];
+		m_Capture.mWidth = WIDTH;
+		m_Capture.mHeight = HEIGHT;
+		m_Capture.mTargetBuf = new int[WIDTH * HEIGHT];
 		m_Detector = dlib::get_frontal_face_detector();
 	}
 
@@ -96,9 +95,11 @@ namespace Photoxel
 			dynamic_cast<Photoxel::Shader*>(m_Renderer->GetShader())->SetFloat("u_Thresehold", m_Thresehold);
 
 			if (m_Image) {
-				dynamic_cast<Photoxel::Shader*>(m_Renderer->GetShader())->SetInt("u_Width", m_Image->GetWidth());
-				dynamic_cast<Photoxel::Shader*>(m_Renderer->GetShader())->SetInt("u_Height", m_Image->GetHeight());
+				dynamic_cast<Photoxel::Shader*>(m_Renderer->GetShader())->SetInt("u_Width", m_VideoFrame->GetWidth());
+				dynamic_cast<Photoxel::Shader*>(m_Renderer->GetShader())->SetInt("u_Height", m_VideoFrame->GetHeight());
 			}
+			dynamic_cast<Photoxel::Shader*>(m_Renderer->GetShader())->SetInt("u_Width", m_VideoFrame->GetWidth());
+			dynamic_cast<Photoxel::Shader*>(m_Renderer->GetShader())->SetInt("u_Height", m_VideoFrame->GetHeight());
 			m_Renderer->OnRender();
 
 			m_ViewportFramebuffer->End();
@@ -392,15 +393,69 @@ namespace Photoxel
 			m_SectionFocus = VIDEO;
 		}
 		ImVec2 effectsSize = ImGui::GetContentRegionAvail();
-		ImGui::Button("Negative", ImVec2(effectsSize.x, 30.0f));
-		ImGui::Button("Grayscale", ImVec2(effectsSize.x, 30.0f));
-		ImGui::Button("Sepia", ImVec2(effectsSize.x, 30.0f));
-		ImGui::Button("Brightness", ImVec2(effectsSize.x, 30.0f));
-		ImGui::Button("Contrast", ImVec2(effectsSize.x, 30.0f));
-		ImGui::Button("Edge Detection", ImVec2(effectsSize.x, 30.0f));
-		ImGui::Button("Binary", ImVec2(effectsSize.x, 30.0f));
-		ImGui::Button("Gaussian Blur", ImVec2(effectsSize.x, 30.0f));
+		if (ImGui::Button("Negative", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::Negative);
+			red.clear();
+			green.clear();
+			blue.clear();
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
+		if (ImGui::Button("Grayscale", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::Grayscale);
+			red.clear();
+			green.clear();
+			blue.clear();
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
+		if (ImGui::Button("Sepia", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::Sepia);
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
+		if (ImGui::Button("Brightness", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::Brightness);
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
+		if (ImGui::Button("Contrast", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::Contrast);
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
+		if (ImGui::Button("Edge Detection", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::EdgeDetection);
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
+		if (ImGui::Button("Binary", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::Binary);
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
 		ImGui::Button("Gradient", ImVec2(effectsSize.x, 30.0f));
+		if (ImGui::Button("Pixelate", ImVec2(effectsSize.x, 30.0f))) {
+			m_ImageFilters.insert(Filter::Pixelate);
+			m_Renderer->GetShader()->RecreateShader({
+				{ "VertexShader", Photoxel::ShaderType::Vertex },
+				{ "PixelShader", Photoxel::ShaderType::Pixel }
+				}, m_ImageFilters);
+		}
 		ImGui::End();
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
@@ -436,36 +491,19 @@ namespace Photoxel
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows)) {
 			m_SectionFocus = VIDEO;
 		}
-		if (ImGui::TreeNodeEx("Trees"))
-		{
-			ImVec2 imageSize = ImVec2(64, 64);
 
-			ImVec2 size = ImGui::GetContentRegionAvail();
-
-			//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			ImGui::Image((void*)m_Image->GetTextureID(),
-				imageSize,
-				ImVec2(0, 1),
-				ImVec2(1, 0));
-			/*ImGui::ImageButtonWithText(
-				(void*)m_Image->GetTextureID(),
-				"Hola Mundo",
-				imageSize,
-				ImVec2(0, 1),
-				ImVec2(1, 0),
-				ImVec2(size.x, 64)
-			);*/
-			ImGui::Separator();
-			ImGui::Image((void*)m_Image->GetTextureID(),
-				imageSize,
-				ImVec2(0, 1),
-				ImVec2(1, 0));
-			ImGui::Separator();
-
-			//ImGui::PopStyleColor();
-			ImGui::TreePop();
+		if (m_ImageFilters.find(Filter::Brightness) != m_ImageFilters.end()) {
+			if (ImGui::SliderFloat("Brillo", &prueba, 0.0f, 2.0f)) {
+				m_HistogramHasUpdate = true;
+			}
 		}
-
+		if (m_ImageFilters.find(Filter::Contrast) != m_ImageFilters.end()) {
+			ImGui::SliderFloat("Contraste", &m_Contrast, -1.0f, 1.0f);
+		}
+		if (m_ImageFilters.find(Filter::Binary) != m_ImageFilters.end()) {
+			ImGui::SliderFloat("Umbral", &m_Thresehold, 0.0f, 5.0f);
+		}
+		
 		ImGui::End();
 
 		static int selectedEntry = -1;
@@ -516,18 +554,17 @@ namespace Photoxel
 
 		ImGui::Begin("Cameras");
 		static int item = 0;
-		std::vector<const char*> captureDevicesNames = m_Capture.GetCaptureDeviceNames();
-		ImGui::Combo("##", &item, captureDevicesNames.data(), captureDevicesNames.size());
+		ImGui::Combo("##", &item, m_WebcamDevicesNamesRef.data(), m_WebcamDevicesNamesRef.size());
 		ImGui::SameLine();
 		if (ImGui::Button(ICON_FA_PLAY, ImVec2(20, 0))) {
-			m_Capture.StartCapture(item);
+			m_Capture2.StartCapture(item);
 			//initCapture(item, &m_Capture);
 			//doCapture(item);
 			m_IsRecording = true;
 		}
 		ImGui::SameLine();
 		if (ImGui::Button(ICON_FA_STOP, ImVec2(20, 0))) {
-			m_Capture.StopCapture();
+			m_Capture2.StopCapture();
 			//deinitCapture(item);
 			const int data = -16777216;
 			m_Camera->SetData(1, 1, &data);
@@ -535,10 +572,52 @@ namespace Photoxel
 			m_IsRecording = false;
 		}
 		ImGui::End();
-		/*
-		if (m_IsRecording && isCaptureDone(item))
+
+		static int a = 0;
+		if (m_IsRecording)
 		{
-			dlib::array2d<dlib::rgb_pixel> img(WIDTH, HEIGHT);
+			uint8_t* data = m_Capture2.GetBuffer();
+			const uint32_t width = m_Capture2.GetWidth();
+			const uint32_t height = m_Capture2.GetHeight();
+
+			dlib::array2d<dlib::rgb_pixel> img(m_Capture2.GetWidth(), m_Capture2.GetHeight());
+			memcpy(&img[0][0], data, m_Capture2.GetWidth() * m_Capture2.GetHeight() * 3);
+
+			if (a > 10) {
+				const uint32_t scaledWidth = 400;
+				const uint32_t scaledHeight = 400;
+
+				std::vector<uint8_t> rescale(width * height * 3);
+				stbir_resize_uint8(data, width, height, width * 3,
+					rescale.data(), scaledWidth, scaledHeight, scaledWidth * 3, 3);
+
+				dlib::array2d<dlib::rgb_pixel> img2(scaledWidth, scaledHeight);
+				memcpy(&img2[0][0], rescale.data(), scaledWidth * scaledHeight * 3);
+
+				m_Dets = m_Detector(img2);
+				a = 0;
+			}
+			else {
+				a++;
+			}
+			int iterator = 0;
+			for (const auto& face : m_Dets) {
+				dlib::rectangle rect(face.left() * (width / 512), face.top() * (height / 512),
+					face.right() * (width / 512), face.bottom() * (height / 512));
+				dlib::draw_rectangle(img, rect, GetBasicColor(iterator), 1 * 2);
+				dlib::point labelPos(rect.left() - 10, rect.top());
+				// TODO: Need to change draw_string to work from () to []
+				dlib::draw_string(img, labelPos, std::to_string(iterator + 1), 
+					GetBasicColor(iterator));
+				iterator++;
+			}
+
+			m_Camera->SetData(m_Capture2.GetWidth(), m_Capture2.GetHeight(), &img[0][0]);
+			//m_Camera->SetData(256, 256, &img2[0][0]);
+			
+
+
+			/*dlib::array2d<dlib::rgb_pixel> img(WIDTH, HEIGHT);
 			uint8_t* data = (uint8_t*)m_Capture.mTargetBuf;
 			#pragma omp parallel for
 			for (int i = 0; i < m_Capture.mWidth * m_Capture.mHeight; i++) 
@@ -547,9 +626,9 @@ namespace Photoxel
 				img[0][i].blue = data[index];
 				img[0][i].green = data[index + 1];
 				img[0][i].red = data[index + 2];
-			}
+			}*/
 
-			uint8_t rescale[256 * 256 * 4];
+			/*uint8_t rescale[256 * 256 * 4];
 			stbir_resize_uint8(data, m_Capture.mWidth, m_Capture.mHeight, m_Capture.mWidth * 4,
 				rescale, 256, 256, 256 * 4, 4);
 
@@ -561,24 +640,24 @@ namespace Photoxel
 				img2[0][i].blue = rescale[index];
 				img2[0][i].green = rescale[index + 1];
 				img2[0][i].red = rescale[index + 2];
-			}
+			}*/
 
-			m_Dets = m_Detector(img2);
-			int iterator = 0;
-			for (const auto& face : m_Dets) {
-				dlib::rectangle rect(face.left() * 4, face.top() * 4, face.right() * 4, face.bottom() * 4);
-				dlib::draw_rectangle(img, rect, GetBasicColor(iterator), 1 * 4);
-				dlib::point labelPos(rect.left() - 10, rect.top());
-				// TODO: Need to change draw_string to work from () to []
-				dlib::draw_string(img, labelPos, std::to_string(iterator + 1), 
-					GetBasicColor(iterator));
-				iterator++;
-			}
+			//m_Dets = m_Detector(img2);
+			//int iterator = 0;
+			//for (const auto& face : m_Dets) {
+			//	dlib::rectangle rect(face.left() * 2, face.top() * 2, face.right() * 2, face.bottom() * 2);
+			//	dlib::draw_rectangle(img, rect, GetBasicColor(iterator), 1 * 4);
+			//	dlib::point labelPos(rect.left() - 10, rect.top());
+			//	// TODO: Need to change draw_string to work from () to []
+			//	dlib::draw_string(img, labelPos, std::to_string(iterator + 1), 
+			//		GetBasicColor(iterator));
+			//	iterator++;
+			//}
 
-			m_Camera->SetData(WIDTH, HEIGHT, &img[0][0]);
+			//m_Camera->SetData(WIDTH, HEIGHT, &img[0][0]);
 			//doCapture(item);
+			
 		}
-		*/
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Camera Viewport");
