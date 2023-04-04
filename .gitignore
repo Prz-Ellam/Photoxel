@@ -11,9 +11,12 @@ vendor/dlib
 *.vcxproj*
 *.sln
 
+Photoxel/assets
 Photoxel/assets/*.ttf
 Photoxel/assets/*.jpg
 Photoxel/assets/*.dll
+Photoxel/assets/*.lib
+Photoxel/assets/*.dat
 Photoxel/src/IconsFontAwesome5.h
 Photoxel/src/stb_image.h
 
