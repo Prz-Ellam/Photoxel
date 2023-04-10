@@ -141,6 +141,7 @@ namespace Photoxel {
 
 		void Close();
 	private:
+		void UpdateImageInfo();
 		std::shared_ptr<Photoxel::Window> m_Window;
 		std::shared_ptr<Photoxel::Renderer> m_Renderer;
 		std::shared_ptr<Photoxel::Framebuffer> m_ViewportFramebuffer;
@@ -166,13 +167,24 @@ namespace Photoxel {
 
 		Capture m_Capture2;
 
-		float m_Contrast = 0.0f;
-		float m_Thresehold = 0.0f;
+		std::map<std::string, Filter> m_FilterMap;
+
+		float m_Brightness = 0.0f, m_VideoBrightness = 0.0f;
+		float m_Contrast = 0.0f, m_VideoContrast = 0.0f;
+		float m_Thresehold = 0.0f, m_VideoThresehold = 0.0f;
+		int m_Mosaic = 10, m_VideoMosaic = 10;
+		glm::vec3 m_StartColour = glm::vec3(1,0,0), m_EndColour = glm::vec3(0,1,0);
+		glm::vec3 m_VideoStartColour = glm::vec3(1, 0, 0), m_VideoEndColour = glm::vec3(0, 1, 0);
+		float m_Angle = 90.0f, m_Intensity = 0.5f;
+		float m_VideoAngle = 90.0f, m_VideoIntensity = 0.5f;
 
 		float m_ImageScale = 1.0f;
 
+
 		std::vector<float> red, green, blue;
-		bool m_HistogramHasUpdate = true;
+		bool m_HistogramHasUpdate = false;
+
+		glm::vec2 m_ImageViewportSize;
 
 		void RenderMenuBar();
 		void RenderImageTab();

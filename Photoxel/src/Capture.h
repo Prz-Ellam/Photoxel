@@ -26,7 +26,6 @@ namespace Photoxel
 		int GetHeight();
 		uint8_t* GetBuffer();
 		bool ReadCapture();
-		void FreeBuffer();
 	private:
 		static constexpr int MAX_FRAME_SIZE = 1920 * 1080 * 3;
 		int m_CaptureDevicesCount;

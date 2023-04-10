@@ -84,21 +84,21 @@ vec4 edgeDetection(int width, int height) {
 }
 
 // startColour, endColour, angle, intensity
-vec4 gradient(vec4 fragColor, vec4 startColour, vec4 endColour) {
+vec4 gradient(vec4 fragColor, vec3 startColour, vec3 endColour, float angle, float intensity) {
 	vec2 origin = vec2(0.5f, 0.5f);
 	vec2 uv = v_TexCoords;
 	uv -= origin;
     
-    float angle = radians(90.0f) - radians(0) + atan(uv.y, uv.x);
+    float finalAngle = radians(angle) - radians(0) + atan(uv.y, uv.x);
 	float len = length(uv);
-    uv = vec2(cos(angle) * len, sin(angle) * len) + origin;
+    uv = vec2(cos(finalAngle) * len, sin(finalAngle) * len) + origin;
 
-	vec4 colour = mix(startColour, endColour, smoothstep(0.0, 1.0, uv.x));
-	return mix(fragColor, colour, 0.5f);
+	vec4 colour = mix(vec4(startColour, 1.0f), vec4(endColour, 1.0f), smoothstep(0.0, 1.0, uv.x));
+	return mix(fragColor, colour, intensity);
 }
 
-vec4 mosaic(int pixelSize) {
-	vec2 pixel = vec2(pixelSize) / vec2(1024, 767);
+vec4 mosaic(int pixelSize, int width, int height) {
+	vec2 pixel = vec2(pixelSize) / vec2(width, height);
 	vec2 coord = floor(v_TexCoords / pixel) * pixel;
 	return texture(u_Texture, coord);
 }
@@ -163,13 +163,6 @@ const float IMAGE_HEIGHT = 1.0f / 767.0f;
 
 void main() {
 	o_FragColor = texture(u_Texture, v_TexCoords);
-
-	// Aplicar la función mosaic a la variable que contiene el resultado de negative
-	//o_FragColor = mosaic(16);
-
-	//o_FragColor = negative(o_FragColor);
-	
-	
 	/*{{CONTENT}}*/
 
 	o_EntityID = v_EntityID;

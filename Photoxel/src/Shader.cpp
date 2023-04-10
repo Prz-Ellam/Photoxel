@@ -92,6 +92,12 @@ namespace Photoxel
 		glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 	}
 
+	void Shader::SetFloat3(const std::string& name, const glm::vec3& value)
+	{
+		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		glUniform3f(location, value.x, value.y, value.z);
+	}
+
 	void Shader::Kill()
 	{
 		glDeleteProgram(m_RendererID);
@@ -175,7 +181,19 @@ namespace Photoxel
 					}
 					case Filter::Pixelate:
 					{
-						mainCode += "o_FragColor = mosaic(12);\n";
+						headerCode += "uniform int u_Mosaic;\n";
+						headerCode += "uniform int u_MosaicWidth;\n";
+						headerCode += "uniform int u_MosaicHeight;\n";
+						mainCode += "o_FragColor = mosaic(u_Mosaic, u_MosaicWidth, u_MosaicHeight);\n";
+						break;
+					}
+					case Filter::Gradient:
+					{
+						headerCode += "uniform vec3 u_StartColour;\n";
+						headerCode += "uniform vec3 u_EndColour;\n";
+						headerCode += "uniform float u_Angle;\n";
+						headerCode += "uniform float u_Intensity;\n";
+						mainCode += "o_FragColor = gradient(o_FragColor, u_StartColour, u_EndColour, u_Angle, u_Intensity);\n";
 						break;
 					}
 				}

@@ -29,7 +29,7 @@ namespace Photoxel
 		{
 			char cameraname[255];
 			getCaptureDeviceName(i, cameraname, 255);
-			m_CaptureDevicesNames.push_back(cameraname);
+			m_CaptureDevicesNames.emplace_back(std::string(cameraname));
 			m_CaptureDevicesNamesRef.push_back(m_CaptureDevicesNames[i].c_str());
 		}
 
@@ -39,13 +39,17 @@ namespace Photoxel
 
     Capture::~Capture()
     {
-        FreeBuffer();
         StopCapture();
     }
 
 	std::vector<const char*> Capture::GetCaptureDeviceNames() const
 	{
-		return m_CaptureDevicesNamesRef;
+        std::vector<const char*> charVec;
+        for (const auto& str : m_CaptureDevicesNames)
+        {
+            charVec.push_back(str.c_str());
+        }
+		return charVec;
 	}
 
 	bool Capture::StartCapture(int captureIndex)
@@ -104,9 +108,8 @@ namespace Photoxel
             return false;
         }
 
-        m_SwsContext = sws_getContext(m_CodecContext->width, m_CodecContext->height,
-            m_CodecContext->pix_fmt, m_CodecContext->width, m_CodecContext->height,
-            AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
+        m_SwsContext = sws_getContext(m_Width, m_Height, m_CodecContext->pix_fmt, 
+            1024, 1024, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
 
         if (!m_SwsContext) {
             return false;
@@ -116,7 +119,6 @@ namespace Photoxel
         m_CaptureThread = std::thread([&]() {
             while (m_CaptureStarted) {
                 ReadCapture();
-                FreeBuffer();
             }
         });
 
@@ -181,38 +183,41 @@ namespace Photoxel
         return m_Buffer.data();
     }
 
-    void Capture::FreeBuffer()
-    {
-    }
-
     bool Capture::ReadCapture()
     {
         int result = av_read_frame(m_FormatContext, m_Packet);
         if (result < 0) {
+            av_packet_unref(m_Packet);
             return false;
         }
 
         if (m_Packet->stream_index != m_StreamIndex) {
+            av_packet_unref(m_Packet);
             return false;
         }
 
         result = avcodec_send_packet(m_CodecContext, m_Packet);
         if (result < 0) {
+            av_packet_unref(m_Packet);
             return false;
         }
 
         result = avcodec_receive_frame(m_CodecContext, m_Frame);
         if (result == AVERROR(EAGAIN) || result == AVERROR_EOF) {
+            av_packet_unref(m_Packet);
             return false;
         }
         else if (result < 0) {
+            av_packet_unref(m_Packet);
             return false;
         }
 
         uint8_t* dest[4] = { m_Buffer.data(), nullptr, nullptr, nullptr};
-        int stride[4] = { m_Frame->width * 3, 0, 0, 0 };
+        int stride[4] = { 1024 * 3, 0, 0, 0 };
         sws_scale(m_SwsContext, m_Frame->data, m_Frame->linesize, 0, m_Frame->height, dest, stride);
 
+        av_packet_unref(m_Packet);
+        av_frame_unref(m_Frame);
         return true;
     }
 }

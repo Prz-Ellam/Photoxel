@@ -5,12 +5,6 @@
 
 namespace Photoxel
 {
-    struct Line {
-        glm::vec4 Position;
-        glm::vec4 Colour;
-        int ID;
-    };
-
 	Renderer::Renderer()
     {
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -22,6 +16,10 @@ namespace Photoxel
         std::cout << glGetString(GL_VERSION) << std::endl;
 
         m_Shader = new Shader({
+            { "VertexShader", Photoxel::ShaderType::Vertex },
+            { "PixelShader", Photoxel::ShaderType::Pixel }
+        });
+        m_VideoShader = new Shader({
             { "VertexShader", Photoxel::ShaderType::Vertex },
             { "PixelShader", Photoxel::ShaderType::Pixel }
         });
@@ -89,6 +87,6 @@ namespace Photoxel
     void Renderer::BeginScene()
     {
         glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 }

@@ -30,6 +30,6 @@ namespace Photoxel
 		void CreateAttachment(uint32_t width, uint32_t height);
 		uint32_t m_Width, m_Height;
 		uint32_t m_RendererID;
-		uint32_t m_ColorAttachmentID, m_EntityAttachmentID;
+		uint32_t m_ColorAttachmentID, m_EntityAttachmentID, m_OtherTextureID;
 	};
 }

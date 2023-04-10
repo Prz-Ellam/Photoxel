@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <inttypes.h>
 
 namespace Photoxel
@@ -17,7 +18,6 @@ namespace Photoxel
 
 		const char* GetFilename() const;
 		const void* GetData() const;
-		const void* GetData2() const;
 		const uint32_t GetWidth() const;
 		const uint32_t GetHeight() const;
 
@@ -25,6 +25,7 @@ namespace Photoxel
 		void SetData2(uint32_t width, uint32_t height, const void* data);
 
 		void* GetTextureID() const;
+		std::vector<uint8_t> GetData2(int level);
 	private:
 		uint32_t m_Width, m_Height, m_DataFormat;
 		uint32_t m_TextureID;

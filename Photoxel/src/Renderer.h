@@ -21,11 +21,20 @@ namespace Photoxel
 		Shader* GetShader() const {
 			return m_Shader;
 		}
-		void Bind() {
+
+		Shader* GetShaderVideo() const {
+			return m_VideoShader;
+		}
+
+		void BindImage() {
 			m_Shader->Bind();
 		}
+
+		void BindVideo() {
+			m_VideoShader->Bind();
+		}
 	private:
-		Shader *m_Shader;
+		Shader *m_Shader, *m_VideoShader;
 		uint32_t m_VertexArray = 0;
 		uint32_t m_LineVertexBuffer = 0;
 	};

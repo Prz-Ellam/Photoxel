@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 namespace Photoxel
 {
@@ -24,8 +25,8 @@ namespace Photoxel
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 
-		GLenum buffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(2, buffers);
+		//GLenum buffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		//glDrawBuffers(2, buffers);
 
 		glViewport(0, 0, m_Width, m_Height);
 	}
@@ -66,6 +67,7 @@ namespace Photoxel
 	// TODO: Parametrizable
 	void Framebuffer::ClearAttachment(int value) const
 	{
+		glClearTexImage(m_ColorAttachmentID, 1, GL_RED_INTEGER, GL_INT, &value);
 		glClearTexImage(m_EntityAttachmentID, 0, GL_RED_INTEGER, GL_INT, &value);
 	}
 
@@ -78,22 +80,25 @@ namespace Photoxel
 	}
 
 	std::vector<uint8_t> Framebuffer::GetData() const {
-		int level = 0;
-		int width = m_Width >> level;
-		int height = m_Height >> level;
-
+		int width = m_Width;
+		int height = m_Height;
+		
 		std::vector<uint8_t> buffer(width * height * 4);
-		glPixelStorei(GL_PACK_ALIGNMENT, GL_TRUE);
 		glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
-		std::vector<unsigned char> flippedBuffer(width * height * 4);
-		for (int y = 0; y < height; ++y) {
-			const uint8_t* srcRow = buffer.data() + (height - y - 1) * width * 4;
-			unsigned char* dstRow = flippedBuffer.data() + y * width * 4;
-			memcpy(dstRow, srcRow, width * 4);
-		}
-		return flippedBuffer;
+
+		return buffer;
+		
+
+		/*	std::vector<unsigned char> flippedBuffer(width * height * 4);
+			for (int y = 0; y < height; ++y) {
+				const uint8_t* srcRow = buffer.data() + (height - y - 1) * width * 4;
+				unsigned char* dstRow = flippedBuffer.data() + y * width * 4;
+				memcpy(dstRow, srcRow, width * 4);
+			}*/
+
 	}
 
 	uint32_t Framebuffer::GetWidth() const
@@ -111,29 +116,23 @@ namespace Photoxel
 		glGenTextures(1, &m_ColorAttachmentID);
 		glBindTexture(GL_TEXTURE_2D, m_ColorAttachmentID);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*_MIPMAP_LINEAR*/);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR/*_MIPMAP_LINEAR*/);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glGenerateMipmap(GL_TEXTURE_2D);
+		//glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		//glGenerateMipmap(GL_TEXTURE_2D);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ColorAttachmentID, 0);
 
-		glGenTextures(1, &m_EntityAttachmentID);
-		glBindTexture(GL_TEXTURE_2D, m_EntityAttachmentID);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glGenTextures(1, &m_OtherTextureID);
+		glBindTexture(GL_TEXTURE_2D, m_OtherTextureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_EntityAttachmentID, 0);
 	}
 }
