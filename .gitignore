@@ -14,6 +14,9 @@ vendor/dlib
 Photoxel/assets/*.ttf
 Photoxel/assets/*.png
 Photoxel/assets/*.jpg
+Photoxel/assets/*.ico
+Photoxel/assets/*.ini
+Photoxel/assets/*.pdf
 Photoxel/assets/*.dll
 Photoxel/assets/*.lib
 Photoxel/assets/*.dat

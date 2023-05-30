@@ -360,7 +360,7 @@ namespace Photoxel
 		if (m_Image) ImGui::Text("Image name: %s", m_Image->GetFilename());
 		ImGui::PopTextWrapPos();
 		if (m_Image) ImGui::Text("Image size: (%d x %d)", m_Image->GetWidth(), m_Image->GetHeight());
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::SliderFloat("Zoom", &m_ImageScale, 0.0f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 		ImGui::End();
 	}
@@ -428,9 +428,9 @@ namespace Photoxel
 		ImGui::PopStyleVar();
 
 		ImGui::Begin("TreeVideo");
-		ImGui::Text("Application (%.1f FPS)", ImGui::GetIO().Framerate);
-		if (m_Video)
-		ImGui::Text("%i", m_Video->GetCurrentSecond());
+		//ImGui::Text("Application (%.1f FPS)", ImGui::GetIO().Framerate);
+		//if (m_Video)
+		//ImGui::Text("%i", m_Video->GetCurrentSecond());
 
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows)) {
 			m_SectionFocus = VIDEO;
@@ -555,8 +555,7 @@ namespace Photoxel
 		ImGui::End();
 
 		static int a = 0;
-		if (m_IsRecording)
-		{
+		if (m_IsRecording) {
 			uint8_t* data = m_Capture2.GetBuffer();
 			uint32_t width = 1024;
 			uint32_t height = 1024;
@@ -568,8 +567,6 @@ namespace Photoxel
 			uint32_t scaledHeight = 512;
 			dlib::array2d<dlib::rgb_pixel> img2(scaledWidth, scaledHeight);
 			if (a > 10) {
-
-				//std::vector<uint8_t> dataW = m_Camera->GetData2(1);
 
 				std::vector<uint8_t> rescale(width * height * 3);
 				stbir_resize_uint8(data, width, height, width * 3,
@@ -591,7 +588,7 @@ namespace Photoxel
 					face.right() * (width / static_cast<double>(scaledWidth)),
 					face.bottom() * (height / static_cast<double>(scaledHeight))
 				);
-				dlib::draw_rectangle(img, rect, GetBasicColor(iterator), 1 * 8);
+				dlib::draw_rectangle(img, rect, GetBasicColor(iterator), 1 * 4);
 				dlib::point labelPos(rect.left() - 10, rect.top());
 				// TODO: Need to change draw_string to work from () to []
 				dlib::draw_string(img, labelPos, std::to_string(iterator + 1), 
@@ -633,7 +630,7 @@ namespace Photoxel
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows)) {
 			m_SectionFocus = CAMERA;
 		}
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		std::string persons = ICON_FA_SMILE + std::string(" Face count: ") + std::to_string(m_Dets.size());
 		ImGui::Text(persons.c_str());
 		ImGui::End();

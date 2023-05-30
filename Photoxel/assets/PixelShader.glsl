@@ -103,64 +103,6 @@ vec4 mosaic(int pixelSize, int width, int height) {
 	return texture(u_Texture, coord);
 }
 
-vec4 gaussianBlur(int width, int height) {
-	float widthSize = 1.0f / width;
-	float heightSize = 1.0f / height;
-
-	vec2 offsets[25] = vec2[](
-		vec2(-widthSize * 2,  heightSize * 2),
-        vec2(-widthSize * 1,  heightSize * 2),
-        vec2( 0.0f,           heightSize * 2),
-        vec2( widthSize * 1,  heightSize * 2),
-		vec2( widthSize * 2,  heightSize * 2),
-
-		vec2(-widthSize * 2,  heightSize * 1),
-        vec2(-widthSize * 1,  heightSize * 1),
-        vec2( 0.0f,           heightSize * 1),
-        vec2( widthSize * 1,  heightSize * 1),
-		vec2( widthSize * 2,  heightSize * 1),
-
-		vec2(-widthSize * 2,  0.0f),
-        vec2(-widthSize * 1,  0.0f),
-        vec2( 0.0f,           0.0f),
-        vec2( widthSize * 1,  0.0f),
-		vec2( widthSize * 2,  0.0f),
-
-		vec2(-widthSize * 2, -heightSize * 1),
-        vec2(-widthSize * 1, -heightSize * 1),
-        vec2( 0.0f,          -heightSize * 1),
-        vec2( widthSize * 1, -heightSize * 1),
-		vec2( widthSize * 2, -heightSize * 1),
-
-		vec2(-widthSize * 2, -heightSize * 2),
-        vec2(-widthSize * 1, -heightSize * 2),
-        vec2( 0.0f,          -heightSize * 2),
-        vec2( widthSize * 1, -heightSize * 2),
-		vec2( widthSize * 2, -heightSize * 2)
-    );
-
-    float kernel[25] = float[](
-        1/256.0f, 4/256.0f, 6/256.0f, 4/256.0f, 1/256.0f,
-		4/256.0f, 16/256.0f, 24/256.0f, 16/256.0f, 4/256.0f,
-		6/256.0f, 24/256.0f, 36/256.0f, 24/256.0f, 6/256.0f,
-		4/256.0f, 16/256.0f, 24/256.0f, 16/256.0f, 4/256.0f,
-		1/256.0f, 4/256.0f, 6/256.0f, 4/256.0f, 1/256.0f
-    );
-    
-    vec3 sampleTex[25];
-    for(int i = 0; i < 25; i++) {
-        sampleTex[i] = vec3(texture(u_Texture, v_TexCoords.st + offsets[i]));
-    }
-    vec3 col = vec3(0.0);
-    for(int i = 0; i < 25; i++)
-        col += sampleTex[i] * kernel[i];
-    
-    return vec4(col, 1.0);
-}
-
-const float IMAGE_WIDTH = 1.0f / 1024.0f;
-const float IMAGE_HEIGHT = 1.0f / 767.0f;
-
 void main() {
 	o_FragColor = texture(u_Texture, v_TexCoords);
 	/*{{CONTENT}}*/

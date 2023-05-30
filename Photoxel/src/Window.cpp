@@ -4,7 +4,7 @@
 namespace Photoxel
 {
 	Window::Window()
-		: m_Width(1280), m_Height(720), m_Title("Photoxel Application")
+		: m_Width(1280), m_Height(720), m_Title("Photoxel")
 	{
 		InitWindow();
 	}

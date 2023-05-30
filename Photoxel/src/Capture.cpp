@@ -14,6 +14,8 @@ extern "C" {
 }
 #include <iostream>
 
+#define SIZE 1024
+
 namespace Photoxel
 {
 	Capture::Capture()
@@ -109,7 +111,7 @@ namespace Photoxel
         }
 
         m_SwsContext = sws_getContext(m_Width, m_Height, m_CodecContext->pix_fmt, 
-            1024, 1024, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
+            SIZE, SIZE, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
 
         if (!m_SwsContext) {
             return false;
@@ -213,7 +215,7 @@ namespace Photoxel
         }
 
         uint8_t* dest[4] = { m_Buffer.data(), nullptr, nullptr, nullptr};
-        int stride[4] = { 1024 * 3, 0, 0, 0 };
+        int stride[4] = { SIZE * 3, 0, 0, 0 };
         sws_scale(m_SwsContext, m_Frame->data, m_Frame->linesize, 0, m_Frame->height, dest, stride);
 
         av_packet_unref(m_Packet);
