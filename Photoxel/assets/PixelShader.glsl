@@ -1,16 +1,14 @@
 #version 330 core
 
 layout(location = 0) out vec4 o_FragColor;
-layout(location = 1) out int o_EntityID;
 
 in vec2 v_TexCoords;
-flat in int v_EntityID;
 
 uniform sampler2D u_Texture;
 /*{{HEADER}}*/
 
 vec4 negative(vec4 fragColor) {
-	return vec4(1.0f - fragColor.xyz, fragColor.w);
+	return vec4(1.0f - fragColor.rgb, fragColor.a);
 }
 
 vec4 grayscale(vec4 fragColor) {
@@ -83,13 +81,13 @@ vec4 edgeDetection(int width, int height) {
     return vec4(col, 1.0);
 }
 
-// startColour, endColour, angle, intensity
 vec4 gradient(vec4 fragColor, vec3 startColour, vec3 endColour, float angle, float intensity) {
 	vec2 origin = vec2(0.5f, 0.5f);
 	vec2 uv = v_TexCoords;
 	uv -= origin;
+    uv *= 2.0f;
     
-    float finalAngle = radians(angle) - radians(0) + atan(uv.y, uv.x);
+    float finalAngle = radians(angle) + atan(uv.y, uv.x);
 	float len = length(uv);
     uv = vec2(cos(finalAngle) * len, sin(finalAngle) * len) + origin;
 
@@ -106,6 +104,4 @@ vec4 mosaic(int pixelSize, int width, int height) {
 void main() {
 	o_FragColor = texture(u_Texture, v_TexCoords);
 	/*{{CONTENT}}*/
-
-	o_EntityID = v_EntityID;
 }

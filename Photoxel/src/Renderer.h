@@ -26,15 +26,23 @@ namespace Photoxel
 			return m_VideoShader;
 		}
 
-		void BindImage() {
+		Shader* GetShaderCamera() const {
+			return m_CameraShader;
+		}
+
+		void BindImageShader() {
 			m_Shader->Bind();
 		}
 
-		void BindVideo() {
+		void BindVideoShader() {
 			m_VideoShader->Bind();
 		}
+
+		void BindCameraShader() {
+			m_CameraShader->Bind();
+		}
 	private:
-		Shader *m_Shader, *m_VideoShader;
+		Shader *m_Shader, *m_VideoShader, *m_CameraShader;
 		uint32_t m_VertexArray = 0;
 		uint32_t m_LineVertexBuffer = 0;
 	};

@@ -23,6 +23,10 @@ namespace Photoxel
             { "VertexShader", Photoxel::ShaderType::Vertex },
             { "PixelShader", Photoxel::ShaderType::Pixel }
         });
+        m_CameraShader = new Shader({
+            { "CameraVertexShader", Photoxel::ShaderType::Vertex },
+            { "CameraPixelShader", Photoxel::ShaderType::Pixel }
+            });
 
         struct Data {
             glm::vec4 Position;
@@ -42,8 +46,8 @@ namespace Photoxel
         };
         unsigned int VBO, EBO;
         glGenVertexArrays(1, &m_VertexArray);
-        glCreateBuffers(1, &VBO);
-        glCreateBuffers(1, &EBO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
         glBindVertexArray(m_VertexArray);
 
@@ -78,10 +82,14 @@ namespace Photoxel
         // draw our first triangle
         //m_Shader->Bind();
 
-        m_Shader->SetInt("u_Texture", 0);
+
+
+        auto error = glGetError();
 
         glBindVertexArray(m_VertexArray); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        error = glGetError();
     }
 
     void Renderer::BeginScene()

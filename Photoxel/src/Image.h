@@ -13,7 +13,7 @@ namespace Photoxel
 		Image(uint32_t width, uint32_t height, const void* data);
 		~Image();
 
-		void Bind();
+		void Bind(int slot = 0);
 		void Unbind();
 
 		const char* GetFilename() const;
@@ -21,6 +21,9 @@ namespace Photoxel
 		const uint32_t GetWidth() const;
 		const uint32_t GetHeight() const;
 
+		void CopyImage(Image* image) {
+
+		}
 		void SetData(uint32_t width, uint32_t height, const void* data);
 		void SetData2(uint32_t width, uint32_t height, const void* data);
 

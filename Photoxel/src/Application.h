@@ -149,7 +149,7 @@ namespace Photoxel {
 		bool m_Running;
 		std::shared_ptr<Photoxel::ImGuiWindow> m_GuiWindow;
 
-		std::shared_ptr<Photoxel::Image> m_Image, m_VideoFrame, m_Camera;
+		std::shared_ptr<Photoxel::Image> m_Image, m_VideoFrame, m_Camera, m_PrevCamera;
 		std::shared_ptr<Video> m_Video = nullptr;
 		MySequence mySequence;
 		
@@ -160,6 +160,10 @@ namespace Photoxel {
 		bool m_IsRecording = false;
 		dlib::frontal_face_detector m_Detector;
 		std::vector<dlib::rectangle> m_Dets;
+
+		uint32_t m_PrevWidth = 0, m_PrevHeight = 0;
+		std::vector<uint8_t> m_PrevCapture;
+		bool m_Movement = false;
 
 		Section m_SectionFocus = IMAGE;
 		std::unordered_set<Filter> m_ImageFilters;

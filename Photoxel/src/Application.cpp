@@ -12,6 +12,8 @@
 #include "ColorGenerator.h"
 #include <stb_image_write.h>
 #include <stb_image_resize.h>
+#include <dlib/image_processing/generic_image.h>
+#include <glad/glad.h>
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -36,6 +38,7 @@ namespace Photoxel
 		const int data = -16777216;
 		m_VideoFrame = std::make_shared<Image>(1, 1, &data);
 		m_Camera = std::make_shared<Photoxel::Image>(1, 1, &data);
+		m_PrevCamera = std::make_shared<Photoxel::Image>(1, 1, &data);
 		m_Detector = dlib::get_frontal_face_detector();
 
 		m_FilterMap = {
@@ -62,6 +65,8 @@ namespace Photoxel
 				m_ViewportFramebuffer->Resize(m_Image->GetWidth(), m_Image->GetHeight());
 			}
 			m_ViewportFramebuffer->Begin();
+			m_Renderer->BeginScene();
+			m_ViewportFramebuffer->ClearAttachment();
 
 			if (m_Video) {
 				int status = m_Video->Read();
@@ -71,14 +76,11 @@ namespace Photoxel
 				m_VideoFrame->SetData2(m_Video->GetWidth(), m_Video->GetHeight(), buffer);
 			}
 
-			m_Renderer->BeginScene();
-			m_ViewportFramebuffer->ClearAttachment();
-
 			switch (m_SectionFocus) {
 				case IMAGE:
 					if (m_Image) {
 						m_Image->Bind();
-						m_Renderer->BindImage();
+						m_Renderer->BindImageShader();
 						dynamic_cast<Shader*>(m_Renderer->GetShader())->SetFloat("u_Brightness", m_Brightness);
 						dynamic_cast<Shader*>(m_Renderer->GetShader())->SetFloat("u_Contrast", m_Contrast);
 						dynamic_cast<Shader*>(m_Renderer->GetShader())->SetFloat("u_Thresehold", m_Thresehold);
@@ -91,11 +93,12 @@ namespace Photoxel
 						dynamic_cast<Shader*>(m_Renderer->GetShader())->SetFloat3("u_EndColour", m_EndColour);
 						dynamic_cast<Shader*>(m_Renderer->GetShader())->SetFloat("u_Angle", m_Angle);
 						dynamic_cast<Shader*>(m_Renderer->GetShader())->SetFloat("u_Intensity", m_Intensity);
+						dynamic_cast<Shader*>(m_Renderer->GetShader())->SetInt("u_Texture", 0);
 					}
 					break;
 				case VIDEO:
 					m_VideoFrame->Bind();
-					m_Renderer->BindVideo();
+					m_Renderer->BindVideoShader();
 					dynamic_cast<Shader*>(m_Renderer->GetShaderVideo())->SetFloat("u_Brightness", m_VideoBrightness);
 					dynamic_cast<Shader*>(m_Renderer->GetShaderVideo())->SetFloat("u_Contrast", m_VideoContrast);
 					dynamic_cast<Shader*>(m_Renderer->GetShaderVideo())->SetFloat("u_Thresehold", m_VideoThresehold);
@@ -108,6 +111,15 @@ namespace Photoxel
 					dynamic_cast<Shader*>(m_Renderer->GetShaderVideo())->SetFloat3("u_EndColour", m_VideoEndColour);
 					dynamic_cast<Shader*>(m_Renderer->GetShaderVideo())->SetFloat("u_Angle", m_VideoAngle);
 					dynamic_cast<Shader*>(m_Renderer->GetShaderVideo())->SetFloat("u_Intensity", m_VideoIntensity);
+					dynamic_cast<Shader*>(m_Renderer->GetShaderVideo())->SetInt("u_Texture", 0);
+					break;
+				case CAMERA:
+					m_Camera->Bind(0);
+					m_PrevCamera->Bind(1);
+					m_Renderer->BindCameraShader();
+					dynamic_cast<Shader*>(m_Renderer->GetShaderCamera())->SetInt("u_Texture", 0);
+					dynamic_cast<Shader*>(m_Renderer->GetShaderCamera())->SetInt("u_PrevTexture", 1);
+					dynamic_cast<Shader*>(m_Renderer->GetShaderCamera())->SetInt("u_Movement", m_Movement ? 1 : 0);
 					break;
 			}
 
@@ -362,11 +374,24 @@ namespace Photoxel
 		if (m_Image) ImGui::Text("Image size: (%d x %d)", m_Image->GetWidth(), m_Image->GetHeight());
 		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::SliderFloat("Zoom", &m_ImageScale, 0.0f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+		
+		if (ImGui::Button("Eliminar imagen")) {
+			if (m_Image) {
+				const int data = -16777216;
+				m_Image->SetData(1, 1, &data);
+				m_Image = nullptr;
+				m_HistogramHasUpdate = true;
+			}
+		}
+		
 		ImGui::End();
 	}
 
 	void Application::RenderVideoTab()
 	{
+		if (m_Video && m_SectionFocus != VIDEO)
+			m_Video->Pause();
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin(ICON_FA_VIDEO" Videos");
 
@@ -520,6 +545,16 @@ namespace Photoxel
 
 	void Application::RenderCameraTab()
 	{
+		if (m_IsRecording && m_SectionFocus != CAMERA)
+		{
+			m_Capture2.StopCapture();
+			const int data = -16777216;
+			m_Camera->SetData(1, 1, &data);
+			m_PrevCamera->SetData(1, 1, &data);
+			m_Dets.clear();
+			m_IsRecording = false;
+		}
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin(ICON_FA_CAMERA" Camera");
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows)) {
@@ -530,63 +565,79 @@ namespace Photoxel
 		ImGui::PopStyleVar();
 
 		ImGui::Begin("Cameras");
-		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows)) {
-			m_SectionFocus = CAMERA;
-		}
 		static int item = 0;
 		auto& names = m_Capture2.GetCaptureDeviceNames();
 		ImGui::Combo("##", &item, names.data(), names.size());
 		ImGui::SameLine();
 		if (ImGui::Button(ICON_FA_PLAY, ImVec2(20, 0))) {
-			m_Capture2.StartCapture(item);
-			//initCapture(item, &m_Capture);
-			//doCapture(item);
-			m_IsRecording = true;
+			if (item > 0 || item < names.size()) {
+				m_Capture2.StartCapture(item);
+				m_IsRecording = true;
+			}
 		}
 		ImGui::SameLine();
 		if (ImGui::Button(ICON_FA_STOP, ImVec2(20, 0))) {
-			m_Capture2.StopCapture();
-			//deinitCapture(item);
-			const int data = -16777216;
-			m_Camera->SetData(1, 1, &data);
-			m_Dets.clear();
-			m_IsRecording = false;
+			if (item > 0 || item < names.size()) {
+				m_Capture2.StopCapture();
+				const int data = -16777216;
+				m_Camera->SetData(1, 1, &data);
+				m_PrevCamera->SetData(1, 1, &data);
+				m_Dets.clear();
+				m_IsRecording = false;
+			}
 		}
 		ImGui::End();
 
 		static int a = 0;
-		if (m_IsRecording) {
+		if (m_IsRecording) 
+		{
+			
+			/*glCopyImageSubData((GLuint)m_PrevCamera->GetTextureID(), GL_TEXTURE_2D, 0, 0, 0, 0,
+				(GLuint)m_Camera->GetTextureID(), GL_TEXTURE_2D, 0, 0, 0, 0,
+				512, 512, 1);*/
+			m_PrevCamera->SetData(m_PrevWidth, m_PrevHeight, m_PrevCapture.data());
+
 			uint8_t* data = m_Capture2.GetBuffer();
-			uint32_t width = 1024;
-			uint32_t height = 1024;
+			uint32_t width = 512;
+			uint32_t height = 512;
+
+			size_t dataSize = width * height * sizeof(data);
+			m_PrevWidth = width;
+			m_PrevHeight = height;
+			m_PrevCapture.resize(width * height * sizeof(data));
+			std::copy(data, data + dataSize, m_PrevCapture.begin());
 
 			dlib::array2d<dlib::rgb_pixel> img(width, height);
 			memcpy(&img[0][0], data, width * height * 3);
 
-			uint32_t scaledWidth = 512;
-			uint32_t scaledHeight = 512;
-			dlib::array2d<dlib::rgb_pixel> img2(scaledWidth, scaledHeight);
-			if (a > 10) {
+			//uint32_t scaledWidth = 512;
+			//uint32_t scaledHeight = 512;
+			//dlib::array2d<dlib::rgb_pixel> img2(scaledWidth, scaledHeight);
+			//if (a > 10) {
 
-				std::vector<uint8_t> rescale(width * height * 3);
-				stbir_resize_uint8(data, width, height, width * 3,
-					rescale.data(), scaledWidth, scaledHeight, scaledWidth * 3, 3);
+			//	std::vector<uint8_t> rescale(width * height * 3);
+			//	stbir_resize_uint8(data, width, height, width * 3,
+			//		rescale.data(), scaledWidth, scaledHeight, scaledWidth * 3, 3);
 
-				memcpy(&img2[0][0], rescale.data(), scaledWidth * scaledHeight * 3);
-
-				m_Dets = m_Detector(img2);
-				a = 0;
+			//	memcpy(&img2[0][0], rescale.data(), scaledWidth * scaledHeight * 3);
+			if (!m_Movement) {
+				m_Dets = m_Detector(img);
 			}
 			else {
-				a++;
+				m_Dets.clear();
 			}
+			//	a = 0;
+			//}
+			//else {
+			//	a++;
+			//}
 			int iterator = 0;
 			for (const auto& face : m_Dets) {
 				dlib::rectangle rect(
-					face.left() * (width / static_cast<double>(scaledWidth)),
-					face.top() * (height / static_cast<double>(scaledHeight)),
-					face.right() * (width / static_cast<double>(scaledWidth)),
-					face.bottom() * (height / static_cast<double>(scaledHeight))
+					face.left() * (width / static_cast<double>(width)),
+					face.top() * (height / static_cast<double>(height)),
+					face.right() * (width / static_cast<double>(width)),
+					face.bottom() * (height / static_cast<double>(height))
 				);
 				dlib::draw_rectangle(img, rect, GetBasicColor(iterator), 1 * 4);
 				dlib::point labelPos(rect.left() - 10, rect.top());
@@ -619,9 +670,10 @@ namespace Photoxel
 		ImGui::SetCursorPosY((viewportSize.y / 2 - scaleCameraSize.y / 2) + navbarHeight);
 
 		ImGui::Image(
-			(ImTextureID)m_Camera->GetTextureID(),
+			(ImTextureID)m_ViewportFramebuffer->GetColorAttachment(),
 			ImVec2(scaleCameraSize.x, scaleCameraSize.y)
 		);
+
 
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -633,6 +685,10 @@ namespace Photoxel
 		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		std::string persons = ICON_FA_SMILE + std::string(" Face count: ") + std::to_string(m_Dets.size());
 		ImGui::Text(persons.c_str());
+
+		if (ImGui::Button(m_Movement ? "Rostros" : "Movimiento")) {
+			m_Movement = !m_Movement;
+		}
 		ImGui::End();
 	}
 

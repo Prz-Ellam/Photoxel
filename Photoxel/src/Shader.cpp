@@ -38,6 +38,8 @@ namespace Photoxel
 		{
 			glDeleteShader(shader);
 		}
+
+		glUseProgram(m_RendererID);
 	}
 
 	Shader::~Shader()

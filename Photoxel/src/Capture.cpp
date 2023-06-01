@@ -1,6 +1,7 @@
 #include "Capture.h"
 #include "escapi.h"
 #include <mutex>
+#include <sstream>
 
 extern "C" {
 #include <libavutil/opt.h>
@@ -14,26 +15,89 @@ extern "C" {
 }
 #include <iostream>
 
-#define SIZE 1024
+#define SIZE 512
 
 namespace Photoxel
 {
+    HRESULT Capture::EnumerateDevices(REFGUID category, IEnumMoniker** ppEnum)
+    {
+        HRESULT hr;
+        ICreateDevEnum* pDevEnum = NULL;
+        hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
+            IID_ICreateDevEnum, (void**)&pDevEnum);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = pDevEnum->CreateClassEnumerator(category, ppEnum, 0);
+            if (hr == S_FALSE)
+            {
+                hr = VFW_E_NOT_FOUND;
+            }
+            pDevEnum->Release();
+        }
+        return hr;
+    }
+
+    void Capture::DisplayDeviceInformation(IEnumMoniker* pEnum)
+    {
+        IMoniker* pMoniker = NULL;
+
+        while (pEnum->Next(1, &pMoniker, NULL) == S_OK)
+        {
+            IPropertyBag* pPropBag;
+            HRESULT hr = pMoniker->BindToStorage(0, 0, IID_PPV_ARGS(&pPropBag));
+            if (FAILED(hr))
+            {
+                pMoniker->Release();
+                continue;
+            }
+
+            VARIANT var;
+            VariantInit(&var);
+
+            hr = pPropBag->Read(L"Description", &var, 0);
+            if (FAILED(hr))
+            {
+                hr = pPropBag->Read(L"FriendlyName", &var, 0);
+            }
+            if (SUCCEEDED(hr))
+            {
+                printf("%S\n", var.bstrVal);
+                std::wstringstream ss;
+
+                ss << var.bstrVal;
+                std::wstring deviceName = ss.str();
+                std::string strDeviceName = std::string(deviceName.begin(), deviceName.end());
+
+                m_CaptureDevicesNames.emplace_back(strDeviceName);
+                m_CaptureDevicesNamesRef.push_back(strDeviceName.c_str());
+                VariantClear(&var);
+
+                ss.clear();
+            }
+
+            pPropBag->Release();
+            pMoniker->Release();
+        }
+    }
+
+
 	Capture::Capture()
 	{
-		m_CaptureDevicesCount = setupESCAPI();
-		if (m_CaptureDevicesCount == 0)
-		{
-			printf("ESCAPI initialization failure or no devices found.\n");
-			return;
-		}
+        HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        if (SUCCEEDED(hr))
+        {
+            IEnumMoniker* pEnum;
 
-		for (int i = 0; i < m_CaptureDevicesCount; i++)
-		{
-			char cameraname[255];
-			getCaptureDeviceName(i, cameraname, 255);
-			m_CaptureDevicesNames.emplace_back(std::string(cameraname));
-			m_CaptureDevicesNamesRef.push_back(m_CaptureDevicesNames[i].c_str());
-		}
+            hr = EnumerateDevices(CLSID_VideoInputDeviceCategory, &pEnum);
+            if (SUCCEEDED(hr))
+            {
+                DisplayDeviceInformation(pEnum);
+                pEnum->Release();
+            }
+
+            CoUninitialize();
+        }
 
         avdevice_register_all();
         m_Buffer.resize(MAX_FRAME_SIZE);

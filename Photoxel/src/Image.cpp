@@ -54,8 +54,8 @@ namespace Photoxel
 		m_Filename = GetImageName(path.c_str());
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width >> 1, height >> 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		//glGenerateMipmap(GL_TEXTURE_2D);
+		//glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width >> 1, height >> 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     }
 
 	Image::Image(uint32_t width, uint32_t height, const void* data)
@@ -74,8 +74,8 @@ namespace Photoxel
 		m_Data = data;
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width >> 1, height >> 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		//glGenerateMipmap(GL_TEXTURE_2D);
+		//glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width >> 1, height >> 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	}
 
 	Image::~Image()
@@ -83,16 +83,15 @@ namespace Photoxel
 		glDeleteTextures(1, &m_TextureID);
 	}
 
-	void Image::Bind()
+	void Image::Bind(int slot)
 	{
-		glActiveTexture(GL_TEXTURE0 + 0);
+		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, m_TextureID);
 	}
 
 	void Image::Unbind()
 	{
 		glBindTexture(GL_TEXTURE_2D, 0u);
-
 	}
 
 	const char* Image::GetFilename() const
@@ -133,15 +132,15 @@ namespace Photoxel
 
 	void Image::SetData(uint32_t width, uint32_t height, const void* data)
 	{
+		size_t dataSize = width * height * 3;
+		std::vector<uint8_t> dataVector(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize);
 		m_Width = width;
 		m_Height = height;
+		m_Data = data;
 		Bind();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (m_Width == 1) ? GL_NEAREST : GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (m_Width == 1) ? GL_NEAREST : GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 3);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_Width, m_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		//glGenerateMipmap(GL_TEXTURE_2D);
-		//glTexImage2D(GL_TEXTURE_2D, 1, GL_RGB8, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_Width, m_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, dataVector.data());
 		Unbind();
 	}
 
@@ -149,10 +148,10 @@ namespace Photoxel
 	{
 		m_Width = width;
 		m_Height = height;
+		m_Data = data;
 		Bind();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (m_Width == 1) ? GL_NEAREST : GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (m_Width == 1) ? GL_NEAREST : GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 3);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		Unbind();
 	}
