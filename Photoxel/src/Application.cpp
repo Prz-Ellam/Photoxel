@@ -588,13 +588,8 @@ namespace Photoxel
 		}
 		ImGui::End();
 
-		static int a = 0;
 		if (m_IsRecording) 
 		{
-			
-			/*glCopyImageSubData((GLuint)m_PrevCamera->GetTextureID(), GL_TEXTURE_2D, 0, 0, 0, 0,
-				(GLuint)m_Camera->GetTextureID(), GL_TEXTURE_2D, 0, 0, 0, 0,
-				512, 512, 1);*/
 			m_PrevCamera->SetData(m_PrevWidth, m_PrevHeight, m_PrevCapture.data());
 
 			uint8_t* data = m_Capture2.GetBuffer();
@@ -626,11 +621,7 @@ namespace Photoxel
 			else {
 				m_Dets.clear();
 			}
-			//	a = 0;
-			//}
-			//else {
-			//	a++;
-			//}
+
 			int iterator = 0;
 			for (const auto& face : m_Dets) {
 				dlib::rectangle rect(
@@ -664,8 +655,7 @@ namespace Photoxel
 		float heightScale = viewportSize.y / m_Camera->GetHeight();
 		float minScale = glm::min(widthScale, heightScale);
 		glm::vec2 scaleCameraSize = glm::vec2(m_Camera->GetWidth(), m_Camera->GetHeight()) * minScale;
-		//scaleImageSize *= m_ImageScale;
-
+		
 		ImGui::SetCursorPosX(viewportSize.x / 2 - scaleCameraSize.x / 2);
 		ImGui::SetCursorPosY((viewportSize.y / 2 - scaleCameraSize.y / 2) + navbarHeight);
 
@@ -673,7 +663,6 @@ namespace Photoxel
 			(ImTextureID)m_ViewportFramebuffer->GetColorAttachment(),
 			ImVec2(scaleCameraSize.x, scaleCameraSize.y)
 		);
-
 
 		ImGui::End();
 		ImGui::PopStyleVar();
