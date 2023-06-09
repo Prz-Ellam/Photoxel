@@ -4,11 +4,15 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <sstream>
 
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 }
+
+#include <windows.h>
+#include <dshow.h>
 
 namespace Photoxel
 {
@@ -27,6 +31,8 @@ namespace Photoxel
 		uint8_t* GetBuffer();
 		bool ReadCapture();
 	private:
+		HRESULT EnumerateDevices(REFGUID category, IEnumMoniker** ppEnum);
+		void DisplayDeviceInformation(IEnumMoniker* pEnum);
 		static constexpr int MAX_FRAME_SIZE = 1920 * 1080 * 3;
 		int m_CaptureDevicesCount;
 		std::vector<std::string> m_CaptureDevicesNames;

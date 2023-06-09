@@ -4,8 +4,6 @@
 #include <memory>
 #include "Shader.h"
 #include <glm/glm.hpp>
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/image_io.h>
 
 namespace Photoxel
 {
@@ -34,8 +32,7 @@ namespace Photoxel
 			m_VideoShader->Bind();
 		}
 	private:
-		Shader *m_Shader, *m_VideoShader;
+		Shader *m_Shader = nullptr, *m_VideoShader = nullptr;
 		uint32_t m_VertexArray = 0;
-		uint32_t m_LineVertexBuffer = 0;
 	};
 }

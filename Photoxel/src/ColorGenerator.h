@@ -1,5 +1,7 @@
 #pragma once
 
-#include <dlib/image_io.h>
+#include <opencv2/imgproc.hpp>
 
-dlib::rgb_pixel GetBasicColor(int value);
+cv::Scalar GetBasicColor(int value);
+
+//dlib::rgb_pixel GetBasicColor(int value);

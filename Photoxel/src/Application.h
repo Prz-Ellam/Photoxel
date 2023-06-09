@@ -2,22 +2,27 @@
 
 #include <imgui.h>
 #include <memory>
-#include <ImSequencer.h>
 #include <vector>
 #include <string>
-#include <glm/glm.hpp>
-#include "escapi.h"
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/image_processing.h>
-#include <dlib/image_io.h>
-#include "Video.h"
-#include "Filters.h"
-
+#include <map>
+#include <unordered_set>
 #include <thread>
 #include <mutex>
+
+#include <ImSequencer.h>
+#include <glm/glm.hpp>
+
+#include "Video.h"
+#include "Filters.h"
 #include "Capture.h"
 
-namespace Photoxel {
+#include <opencv2/objdetect.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/videoio.hpp>
+
+namespace Photoxel
+{
 	static const char* SequencerItemTypeNames[] = { "Video" };
 
 	enum Section {
@@ -156,16 +161,16 @@ namespace Photoxel {
 		int m_WebcamDevicesCount;
 		std::vector<std::string> m_WebcamDevicesNames;
 		std::vector<const char*> m_WebcamDevicesNamesRef;
-		SimpleCapParams m_Capture = {};
 		bool m_IsRecording = false;
-		dlib::frontal_face_detector m_Detector;
-		std::vector<dlib::rectangle> m_Dets;
 
 		Section m_SectionFocus = IMAGE;
 		std::unordered_set<Filter> m_ImageFilters;
 		std::unordered_set<Filter> m_VideoFilters;
 
 		Capture m_Capture2;
+
+		cv::CascadeClassifier m_CascadeClassifier;
+		std::vector<cv::Rect> m_Faces;
 
 		std::map<std::string, Filter> m_FilterMap;
 
@@ -185,10 +190,12 @@ namespace Photoxel {
 		bool m_HistogramHasUpdate = false;
 
 		glm::vec2 m_ImageViewportSize;
+		bool m_IsThemeOpen = false;
 
 		void RenderMenuBar();
 		void RenderImageTab();
 		void RenderVideoTab();
 		void RenderCameraTab();
+		void RenderThemeWindow();
 	};
 }

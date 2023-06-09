@@ -7,13 +7,14 @@ namespace Photoxel
 {
 	Renderer::Renderer()
     {
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        {
 			return;
 		}
 
-        std::cout << glGetString(GL_VENDOR) << std::endl;
-        std::cout << glGetString(GL_RENDERER) << std::endl;
-        std::cout << glGetString(GL_VERSION) << std::endl;
+        std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
+        std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+        std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
 
         m_Shader = new Shader({
             { "VertexShader", Photoxel::ShaderType::Vertex },
@@ -71,13 +72,11 @@ namespace Photoxel
     Renderer::~Renderer()
     {
         delete m_Shader;
+        delete m_VideoShader;
     }
 
     void Renderer::OnRender()
     {
-        // draw our first triangle
-        //m_Shader->Bind();
-
         m_Shader->SetInt("u_Texture", 0);
 
         glBindVertexArray(m_VertexArray); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized

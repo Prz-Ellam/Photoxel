@@ -4,7 +4,7 @@
 namespace Photoxel
 {
 	Window::Window()
-		: m_Width(1280), m_Height(720), m_Title("Photoxel")
+		: m_Width(1280u), m_Height(720u), m_Title("Photoxel")
 	{
 		InitWindow();
 	}
@@ -32,11 +32,13 @@ namespace Photoxel
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-		m_Window = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
+		m_Window = glfwCreateWindow((int)m_Width, (int)m_Height, m_Title.c_str(), nullptr, nullptr);
 		if (!m_Window)
 		{
 			return false;
 		}
+
+		glfwMaximizeWindow(m_Window);
 
 		glfwMakeContextCurrent(m_Window);
 		glfwSetWindowUserPointer(m_Window, this);
@@ -50,6 +52,11 @@ namespace Photoxel
 	uint32_t Window::GetHeight() const
 	{
 		return m_Height;
+	}
+
+	int Window::GetKey(int key)
+	{
+		return glfwGetKey(m_Window, key);
 	}
 
 	void Window::WindowCloseEventHandler(GLFWwindow* window)
@@ -81,8 +88,8 @@ namespace Photoxel
 		return m_Width;
 	}
 
-	void Window::SetIcons(const std::string& filePath) {
-
+	void Window::SetIcons(const std::string& filePath)
+	{
 		GLFWimage icons[2];
 		icons[0].pixels = stbi_load(filePath.c_str(), &icons[0].width, &icons[0].height, nullptr, 4);
 		icons[1].pixels = icons[0].pixels;
@@ -91,7 +98,6 @@ namespace Photoxel
 
 		glfwSetWindowIcon(m_Window, 2, icons);
 	}
-
 
 	void Window::SetWindowCloseCallback(WindowCloseEventFn callback)
 	{

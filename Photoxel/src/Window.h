@@ -26,6 +26,8 @@ namespace Photoxel
 		uint32_t GetHeight() const;
 		void SetIcons(const std::string& filePath);
 
+		int GetKey(int key);
+
 		void SetWindowCloseCallback(WindowCloseEventFn callback);
 	private:
 		GLFWwindow* m_Window;

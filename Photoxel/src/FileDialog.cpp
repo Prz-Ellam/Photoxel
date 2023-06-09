@@ -7,8 +7,10 @@
 #include <GLFW/glfw3native.h>
 #include "Application.h"
 
-namespace Photoxel {
-	std::string FileDialog::OpenFile(const Window& window, const std::string& filter) {
+namespace Photoxel
+{
+	std::string FileDialog::OpenFile(const Window& window, const std::string& filter)
+	{
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };
 		CHAR currentDir[256] = { 0 };
@@ -38,7 +40,8 @@ namespace Photoxel {
 		return std::string();
 	}
 
-	std::string FileDialog::SaveFile(const Window& window, const std::string& filter) {
+	std::string FileDialog::SaveFile(const Window& window, const std::string& filter)
+	{
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { "image.jpg"};
 		CHAR currentDir[256] = { 0 };
@@ -55,7 +58,7 @@ namespace Photoxel {
 
 		ofn.lpstrDefExt = strchr(filter.c_str(), '\0') + 1;
 
-		if (GetSaveFileNameA(&ofn) == TRUE)
+		if (GetSaveFileNameA(&ofn))
 			return ofn.lpstrFile;
 
 		return std::string();

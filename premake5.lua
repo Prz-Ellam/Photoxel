@@ -40,13 +40,13 @@ project "Photoxel"
         "vendor/implot",
         "vendor/stb",
         "vendor/IconFontCppHeaders",
-        "vendor/escapi",
-        "vendor/dlib",
-        "vendor/ffmpeg/include"
+        "vendor/ffmpeg/include",
+        "vendor/opencv/build/include"
     }
 
     libdirs {
         "vendor/ffmpeg/lib",
+        "vendor/opencv/build/x64/vc16/lib",
         "Photoxel/assets"
     }
 
@@ -57,6 +57,7 @@ project "Photoxel"
 		"ImGuizmo",
         "ImPlot",
 		"opengl32.lib",
+        "strmiids.lib",
         "swscale.lib",
         "swresample.lib",
         "postproc.lib",
@@ -65,7 +66,7 @@ project "Photoxel"
         "avfilter.lib",
         "avdevice.lib",
         "avcodec.lib",
-        "dlib19.24.0_release_64bit_msvc1932.lib"
+        "opencv_world470.lib"
 	}
 
     filter "configurations:Debug"
